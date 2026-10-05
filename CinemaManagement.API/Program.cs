@@ -1,4 +1,5 @@
 using CinemaManagement.API.Data;
+using CinemaManagement.API.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<CinemaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<BookingService>();
+builder.Services.AddScoped<MembershipService>();
 
 var app = builder.Build();
 

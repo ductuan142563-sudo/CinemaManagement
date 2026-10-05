@@ -1,23 +1,20 @@
-﻿using CinemaManagement.API.Data;
-using CinemaManagement.API.Models;
-using CinemaManagement.DAL.Repositories;
+﻿using CinemaManagement.API.Data;          
+using CinemaManagement.API.Models;        
+using Microsoft.EntityFrameworkCore;
 
-namespace CinemaManagement.API.Services
+namespace CinemaManagement.API.Services   
 {
     public class MembershipService
     {
         private readonly CinemaDbContext _context;
-        private readonly MemberRepository _memberRepo;
 
         public MembershipService(CinemaDbContext context)
         {
             _context = context;
-            _memberRepo = new MemberRepository(context);
         }
 
         /// <summary>
-        /// Tính điểm nhận được.
-        /// Công thức: (finalAmount / 10000) * PointRate
+        /// Tính điểm nhận được: (finalAmount / 10000) * PointRate
         /// </summary>
         public int CalculatePoints(decimal finalAmount, MembershipTier tier)
         {
@@ -28,8 +25,7 @@ namespace CinemaManagement.API.Services
         }
 
         /// <summary>
-        /// Tính số tiền được giảm giá.
-        /// Công thức: baseAmount * DiscountPercent / 100
+        /// Tính số tiền được giảm: baseAmount * DiscountPercent / 100
         /// </summary>
         public decimal CalculateDiscount(decimal baseAmount, MembershipTier tier)
         {
@@ -40,13 +36,14 @@ namespace CinemaManagement.API.Services
         }
 
         /// <summary>
-        /// Cộng điểm + ghi PointTransaction + kiểm tra nâng hạng.
+        /// Cộng điểm + ghi PointTransaction + kiểm tra nâng hạng
         /// </summary>
         public void AddPointsAndCheckUpgrade(int memberId, int points)
         {
             if (points <= 0) return;
 
             var member = _context.Members
+                .Include(m => m.Tier)               // nên Include
                 .FirstOrDefault(m => m.MemberID == memberId);
 
             if (member == null) return;
@@ -55,16 +52,15 @@ namespace CinemaManagement.API.Services
             member.CurrentPoints += points;
             member.TotalPoints += points;
 
-            // Ghi lịch sử
-            var transaction = new PointTransaction
+            // Ghi lịch sử (điểm dương = Earn)
+            _context.PointTransactions.Add(new PointTransaction
             {
                 MemberID = memberId,
                 Points = points,
                 Type = "Earn",
                 Description = $"Earn {points} points from booking",
-                CreatedAt = DateTime.Now   
-            };
-            _context.PointTransactions.Add(transaction);
+                CreatedAt = DateTime.Now
+            });
 
             // Kiểm tra nâng hạng
             CheckAndUpgradeTier(member);
@@ -73,7 +69,7 @@ namespace CinemaManagement.API.Services
         }
 
         /// <summary>
-        /// Đổi điểm. Trả về true nếu đủ điểm, false nếu không đủ.
+        /// Đổi điểm. Trả về true nếu đủ điểm.
         /// </summary>
         public bool RedeemPoints(int memberId, int pointsToRedeem)
         {
@@ -88,40 +84,37 @@ namespace CinemaManagement.API.Services
             // Trừ điểm
             member.CurrentPoints -= pointsToRedeem;
 
-            // Ghi lịch sử
-            var transaction = new PointTransaction
+            // Ghi lịch sử (điểm âm = Redeem)  ← quan trọng
+            _context.PointTransactions.Add(new PointTransaction
             {
                 MemberID = memberId,
-                Points = pointsToRedeem,
+                Points = -pointsToRedeem,           // số âm
                 Type = "Redeem",
                 Description = $"Redeem {pointsToRedeem} points",
-                CreatedAt = DateTime.Now   
-            };
-            _context.PointTransactions.Add(transaction);
+                CreatedAt = DateTime.Now
+            });
 
             _context.SaveChanges();
             return true;
         }
 
         /// <summary>
-        /// Kiểm tra TotalPoints để nâng hạng: Silver → Gold → Platinum
+        /// Chỉ nâng hạng, không hạ hạng.
         /// </summary>
         private void CheckAndUpgradeTier(Member member)
         {
-            // Lấy tất cả tier sắp xếp theo MinPoints giảm dần
-            var tiers = _context.MembershipTiers
+            // Lấy tier cao nhất mà member đủ điều kiện
+            var suitableTier = _context.MembershipTiers
+                .Where(t => member.TotalPoints >= t.MinPoints)
                 .OrderByDescending(t => t.MinPoints)
-                .ToList();
+                .FirstOrDefault();
 
-            foreach (var tier in tiers)
+            if (suitableTier != null && member.TierID != suitableTier.TierID)
             {
-                if (member.TotalPoints >= tier.MinPoints)
+                // Chỉ nâng (MinPoints của tier mới phải cao hơn tier hiện tại)
+                if (member.Tier == null || suitableTier.MinPoints > member.Tier.MinPoints)
                 {
-                    if (member.TierID != tier.TierID)
-                    {
-                        member.TierID = tier.TierID;
-                    }
-                    break; // đã tìm thấy tier cao nhất phù hợp
+                    member.TierID = suitableTier.TierID;
                 }
             }
         }

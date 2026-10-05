@@ -1,38 +1,45 @@
 ﻿using CinemaManagement.API.Data;
-using CinemaManagement.API.Models;          
-using CinemaManagement.BLL.DTOs;
-using CinemaManagement.DAL.Repositories;
+using CinemaManagement.API.Models;
+using CinemaManagement.DAL.Repositories;   
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace CinemaManagement.API.Services
 {
+    public class BookingResult
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public Booking? Booking { get; set; }
+
+        public static BookingResult Ok(Booking booking, string message)
+            => new() { Success = true, Booking = booking, Message = message };
+
+        public static BookingResult Fail(string message)
+            => new() { Success = false, Message = message };
+    }
+
     public class BookingService
     {
         private readonly CinemaDbContext _context;
         private readonly BookingRepository _bookingRepo;
-        private readonly MemberRepository _memberRepo;
         private readonly MembershipService _membershipService;
 
         public BookingService(CinemaDbContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _bookingRepo = new BookingRepository(context);
-            _memberRepo = new MemberRepository(context);
             _membershipService = new MembershipService(context);
         }
 
         /// <summary>
-        /// Tạo booking đầy đủ: kiểm tra ghế trùng → tính tiền + membership → lưu Booking + Detail → cộng điểm.
+        /// Tạo booking đầy đủ
         /// </summary>
         public BookingResult CreateBooking(int showtimeId, List<int> seatIds, int? memberId)
         {
             if (seatIds == null || seatIds.Count == 0)
                 return BookingResult.Fail("Vui lòng chọn ít nhất một ghế.");
 
-            // Loại bỏ ghế trùng trong danh sách chọn
+            // Loại bỏ ghế trùng trong danh sách
             seatIds = seatIds.Distinct().ToList();
 
             try
@@ -57,32 +64,17 @@ namespace CinemaManagement.API.Services
                 if (showtime.StartTime <= DateTime.Now)
                     return BookingResult.Fail("Không thể đặt vé cho suất chiếu đã bắt đầu hoặc đã qua.");
 
-                // 3. Tính baseAmount
+                // 3. Tính tiền
                 decimal baseAmount = showtime.BasePrice * seatIds.Count;
                 decimal discount = 0;
                 int pointsEarned = 0;
                 Member? member = null;
 
-                // 4. Áp dụng Membership (nếu có)
                 if (memberId.HasValue && memberId.Value > 0)
                 {
-                    // Ưu tiên lấy theo MemberID + Include Tier
                     member = _context.Members
                         .Include(m => m.Tier)
                         .FirstOrDefault(m => m.MemberID == memberId.Value);
-
-                    // Fallback: thử theo UserID nếu repository có method GetByUserId
-                    if (member == null)
-                    {
-                        try
-                        {
-                            member = _memberRepo.GetByUserId(memberId.Value);
-                        }
-                        catch
-                        {
-                            // bỏ qua nếu method không tồn tại
-                        }
-                    }
 
                     if (member == null)
                         return BookingResult.Fail("Thành viên không tồn tại.");
@@ -94,43 +86,38 @@ namespace CinemaManagement.API.Services
                     pointsEarned = _membershipService.CalculatePoints(baseAmount - discount, member.Tier);
                 }
 
-                // 5. finalAmount
-                decimal finalAmount = baseAmount - discount;
-                if (finalAmount < 0) finalAmount = 0;
+                decimal finalAmount = Math.Max(0, baseAmount - discount);
 
-                // 6. Tạo Booking (CHỈ GÁN CÁC PROPERTY MODEL THẬT SỰ CÓ)
+                // 4. Tạo Booking (khớp model thật của bạn)
                 var booking = new Booking
                 {
                     BookingCode = _bookingRepo.GenerateBookingCode(),
                     ShowtimeID = showtimeId,
                     MemberID = member?.MemberID,
-                    TotalAmount = finalAmount,
+                    TotalAmount = baseAmount,        // tiền gốc
+                    DiscountAmount = discount,       // tiền giảm
+                    FinalAmount = finalAmount,       // tiền sau giảm
+                    PointsEarned = pointsEarned,
                     Status = "Paid",
                     CreatedAt = DateTime.Now
                 };
 
-                // Nếu model của bạn CÓ các field sau thì bỏ comment:
-                // booking.DiscountAmount = discount;
-                // booking.PointsEarned = pointsEarned;
-
                 _context.Bookings.Add(booking);
                 _context.SaveChanges(); // lấy BookingID
 
-                // 7. Tạo BookingDetails
+                // 5. Tạo BookingDetails
                 foreach (var seatId in seatIds)
                 {
-                    var detail = new BookingDetail
+                    _context.BookingDetails.Add(new BookingDetail
                     {
                         BookingID = booking.BookingID,
                         SeatID = seatId,
                         Price = showtime.BasePrice
-                    };
-                    _context.BookingDetails.Add(detail);
+                    });
                 }
-
                 _context.SaveChanges();
 
-                // 8. Cộng điểm + kiểm tra nâng hạng
+                // 6. Cộng điểm + kiểm tra nâng hạng
                 if (member != null && pointsEarned > 0)
                 {
                     _membershipService.AddPointsAndCheckUpgrade(member.MemberID, pointsEarned);
@@ -139,9 +126,9 @@ namespace CinemaManagement.API.Services
                 // Reload đầy đủ
                 booking = _context.Bookings
                     .Include(b => b.BookingDetails)
-                    .FirstOrDefault(b => b.BookingID == booking.BookingID);
+                    .FirstOrDefault(b => b.BookingID == booking.BookingID)!;
 
-                string msg = $"Đặt vé thành công! Mã: {booking!.BookingCode}. Thanh toán: {finalAmount:N0}đ";
+                string msg = $"Đặt vé thành công! Mã: {booking.BookingCode}. Thanh toán: {finalAmount:N0}đ";
                 if (pointsEarned > 0)
                     msg += $". Điểm nhận: +{pointsEarned}";
 
@@ -154,7 +141,7 @@ namespace CinemaManagement.API.Services
         }
 
         /// <summary>
-        /// Hủy booking theo mã (optional)
+        /// Hủy booking theo mã
         /// </summary>
         public BookingResult CancelBooking(string bookingCode)
         {
@@ -178,11 +165,8 @@ namespace CinemaManagement.API.Services
                     return BookingResult.Fail("Không thể hủy vé của suất chiếu đã bắt đầu.");
 
                 booking.Status = "Cancelled";
-
-                // Nếu model có UpdatedAt thì bỏ comment:
-                // booking.UpdatedAt = DateTime.Now;
-
                 _context.SaveChanges();
+
                 return BookingResult.Ok(booking, "Hủy booking thành công.");
             }
             catch (Exception ex)
