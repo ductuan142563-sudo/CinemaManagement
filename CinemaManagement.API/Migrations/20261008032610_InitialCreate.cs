@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace CinemaManagement.API.Data.Migrations
+namespace CinemaManagement.API.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -93,7 +93,8 @@ namespace CinemaManagement.API.Data.Migrations
                     PosterUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AgeRating = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    GenreID1 = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -101,6 +102,12 @@ namespace CinemaManagement.API.Data.Migrations
                     table.ForeignKey(
                         name: "FK_Movies_Genres_GenreID",
                         column: x => x.GenreID,
+                        principalTable: "Genres",
+                        principalColumn: "GenreID",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Movies_Genres_GenreID1",
+                        column: x => x.GenreID1,
                         principalTable: "Genres",
                         principalColumn: "GenreID");
                 });
@@ -114,7 +121,8 @@ namespace CinemaManagement.API.Data.Migrations
                     HallID = table.Column<int>(type: "int", nullable: false),
                     RowLabel = table.Column<string>(type: "nvarchar(5)", maxLength: 5, nullable: false),
                     SeatNumber = table.Column<int>(type: "int", nullable: false),
-                    SeatType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
+                    SeatType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    HallID1 = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -124,7 +132,12 @@ namespace CinemaManagement.API.Data.Migrations
                         column: x => x.HallID,
                         principalTable: "Halls",
                         principalColumn: "HallID",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Seats_Halls_HallID1",
+                        column: x => x.HallID1,
+                        principalTable: "Halls",
+                        principalColumn: "HallID");
                 });
 
             migrationBuilder.CreateTable(
@@ -168,7 +181,9 @@ namespace CinemaManagement.API.Data.Migrations
                     StartTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     BasePrice = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    HallID1 = table.Column<int>(type: "int", nullable: true),
+                    MovieID1 = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -178,13 +193,23 @@ namespace CinemaManagement.API.Data.Migrations
                         column: x => x.HallID,
                         principalTable: "Halls",
                         principalColumn: "HallID",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Showtimes_Halls_HallID1",
+                        column: x => x.HallID1,
+                        principalTable: "Halls",
+                        principalColumn: "HallID");
                     table.ForeignKey(
                         name: "FK_Showtimes_Movies_MovieID",
                         column: x => x.MovieID,
                         principalTable: "Movies",
                         principalColumn: "MovieID",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Showtimes_Movies_MovieID1",
+                        column: x => x.MovieID1,
+                        principalTable: "Movies",
+                        principalColumn: "MovieID");
                 });
 
             migrationBuilder.CreateTable(
@@ -197,7 +222,8 @@ namespace CinemaManagement.API.Data.Migrations
                     Points = table.Column<int>(type: "int", nullable: false),
                     Type = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    MemberID1 = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -208,6 +234,11 @@ namespace CinemaManagement.API.Data.Migrations
                         principalTable: "Members",
                         principalColumn: "MemberID",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PointTransactions_Members_MemberID1",
+                        column: x => x.MemberID1,
+                        principalTable: "Members",
+                        principalColumn: "MemberID");
                 });
 
             migrationBuilder.CreateTable(
@@ -224,7 +255,8 @@ namespace CinemaManagement.API.Data.Migrations
                     FinalAmount = table.Column<decimal>(type: "decimal(12,2)", precision: 12, scale: 2, nullable: false),
                     PointsEarned = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ShowtimeID1 = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -240,7 +272,12 @@ namespace CinemaManagement.API.Data.Migrations
                         column: x => x.ShowtimeID,
                         principalTable: "Showtimes",
                         principalColumn: "ShowtimeID",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Bookings_Showtimes_ShowtimeID1",
+                        column: x => x.ShowtimeID1,
+                        principalTable: "Showtimes",
+                        principalColumn: "ShowtimeID");
                 });
 
             migrationBuilder.CreateTable(
@@ -267,7 +304,7 @@ namespace CinemaManagement.API.Data.Migrations
                         column: x => x.SeatID,
                         principalTable: "Seats",
                         principalColumn: "SeatID",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.InsertData(
@@ -332,6 +369,11 @@ namespace CinemaManagement.API.Data.Migrations
                 column: "ShowtimeID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Bookings_ShowtimeID1",
+                table: "Bookings",
+                column: "ShowtimeID1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Members_MembershipCode",
                 table: "Members",
                 column: "MembershipCode",
@@ -354,9 +396,19 @@ namespace CinemaManagement.API.Data.Migrations
                 column: "GenreID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Movies_GenreID1",
+                table: "Movies",
+                column: "GenreID1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PointTransactions_MemberID",
                 table: "PointTransactions",
                 column: "MemberID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PointTransactions_MemberID1",
+                table: "PointTransactions",
+                column: "MemberID1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Seats_HallID",
@@ -364,14 +416,29 @@ namespace CinemaManagement.API.Data.Migrations
                 column: "HallID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Seats_HallID1",
+                table: "Seats",
+                column: "HallID1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Showtimes_HallID",
                 table: "Showtimes",
                 column: "HallID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Showtimes_HallID1",
+                table: "Showtimes",
+                column: "HallID1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Showtimes_MovieID",
                 table: "Showtimes",
                 column: "MovieID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Showtimes_MovieID1",
+                table: "Showtimes",
+                column: "MovieID1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Username",

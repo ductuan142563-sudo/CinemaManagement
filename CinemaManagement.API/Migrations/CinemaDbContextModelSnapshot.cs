@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace CinemaManagement.API.Data.Migrations
+namespace CinemaManagement.API.Migrations
 {
     [DbContext(typeof(CinemaDbContext))]
     partial class CinemaDbContextModelSnapshot : ModelSnapshot
@@ -55,6 +55,9 @@ namespace CinemaManagement.API.Data.Migrations
                     b.Property<int>("ShowtimeID")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ShowtimeID1")
+                        .HasColumnType("int");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -72,6 +75,8 @@ namespace CinemaManagement.API.Data.Migrations
                     b.HasIndex("MemberID");
 
                     b.HasIndex("ShowtimeID");
+
+                    b.HasIndex("ShowtimeID1");
 
                     b.ToTable("Bookings");
                 });
@@ -316,6 +321,9 @@ namespace CinemaManagement.API.Data.Migrations
                     b.Property<int?>("GenreID")
                         .HasColumnType("int");
 
+                    b.Property<int?>("GenreID1")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -334,6 +342,8 @@ namespace CinemaManagement.API.Data.Migrations
                     b.HasKey("MovieID");
 
                     b.HasIndex("GenreID");
+
+                    b.HasIndex("GenreID1");
 
                     b.ToTable("Movies");
                 });
@@ -356,6 +366,9 @@ namespace CinemaManagement.API.Data.Migrations
                     b.Property<int>("MemberID")
                         .HasColumnType("int");
 
+                    b.Property<int?>("MemberID1")
+                        .HasColumnType("int");
+
                     b.Property<int>("Points")
                         .HasColumnType("int");
 
@@ -367,6 +380,8 @@ namespace CinemaManagement.API.Data.Migrations
                     b.HasKey("TransactionID");
 
                     b.HasIndex("MemberID");
+
+                    b.HasIndex("MemberID1");
 
                     b.ToTable("PointTransactions");
                 });
@@ -380,6 +395,9 @@ namespace CinemaManagement.API.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SeatID"));
 
                     b.Property<int>("HallID")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("HallID1")
                         .HasColumnType("int");
 
                     b.Property<string>("RowLabel")
@@ -398,6 +416,8 @@ namespace CinemaManagement.API.Data.Migrations
                     b.HasKey("SeatID");
 
                     b.HasIndex("HallID");
+
+                    b.HasIndex("HallID1");
 
                     b.ToTable("Seats");
                 });
@@ -420,10 +440,16 @@ namespace CinemaManagement.API.Data.Migrations
                     b.Property<int>("HallID")
                         .HasColumnType("int");
 
+                    b.Property<int?>("HallID1")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<int>("MovieID")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MovieID1")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("StartTime")
@@ -433,7 +459,11 @@ namespace CinemaManagement.API.Data.Migrations
 
                     b.HasIndex("HallID");
 
+                    b.HasIndex("HallID1");
+
                     b.HasIndex("MovieID");
+
+                    b.HasIndex("MovieID1");
 
                     b.ToTable("Showtimes");
                 });
@@ -507,10 +537,14 @@ namespace CinemaManagement.API.Data.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("CinemaManagement.API.Models.Showtime", "Showtime")
-                        .WithMany("Bookings")
+                        .WithMany()
                         .HasForeignKey("ShowtimeID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("CinemaManagement.API.Models.Showtime", null)
+                        .WithMany("Bookings")
+                        .HasForeignKey("ShowtimeID1");
 
                     b.Navigation("Member");
 
@@ -528,7 +562,7 @@ namespace CinemaManagement.API.Data.Migrations
                     b.HasOne("CinemaManagement.API.Models.Seat", "Seat")
                         .WithMany()
                         .HasForeignKey("SeatID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Booking");
@@ -558,8 +592,13 @@ namespace CinemaManagement.API.Data.Migrations
             modelBuilder.Entity("CinemaManagement.API.Models.Movie", b =>
                 {
                     b.HasOne("CinemaManagement.API.Models.Genre", "Genre")
+                        .WithMany()
+                        .HasForeignKey("GenreID")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CinemaManagement.API.Models.Genre", null)
                         .WithMany("Movies")
-                        .HasForeignKey("GenreID");
+                        .HasForeignKey("GenreID1");
 
                     b.Navigation("Genre");
                 });
@@ -567,10 +606,14 @@ namespace CinemaManagement.API.Data.Migrations
             modelBuilder.Entity("CinemaManagement.API.Models.PointTransaction", b =>
                 {
                     b.HasOne("CinemaManagement.API.Models.Member", "Member")
-                        .WithMany("PointTransactions")
+                        .WithMany()
                         .HasForeignKey("MemberID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("CinemaManagement.API.Models.Member", null)
+                        .WithMany("PointTransactions")
+                        .HasForeignKey("MemberID1");
 
                     b.Navigation("Member");
                 });
@@ -578,10 +621,14 @@ namespace CinemaManagement.API.Data.Migrations
             modelBuilder.Entity("CinemaManagement.API.Models.Seat", b =>
                 {
                     b.HasOne("CinemaManagement.API.Models.Hall", "Hall")
-                        .WithMany("Seats")
+                        .WithMany()
                         .HasForeignKey("HallID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("CinemaManagement.API.Models.Hall", null)
+                        .WithMany("Seats")
+                        .HasForeignKey("HallID1");
 
                     b.Navigation("Hall");
                 });
@@ -589,16 +636,24 @@ namespace CinemaManagement.API.Data.Migrations
             modelBuilder.Entity("CinemaManagement.API.Models.Showtime", b =>
                 {
                     b.HasOne("CinemaManagement.API.Models.Hall", "Hall")
-                        .WithMany("Showtimes")
+                        .WithMany()
                         .HasForeignKey("HallID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("CinemaManagement.API.Models.Movie", "Movie")
+                    b.HasOne("CinemaManagement.API.Models.Hall", null)
                         .WithMany("Showtimes")
+                        .HasForeignKey("HallID1");
+
+                    b.HasOne("CinemaManagement.API.Models.Movie", "Movie")
+                        .WithMany()
                         .HasForeignKey("MovieID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("CinemaManagement.API.Models.Movie", null)
+                        .WithMany("Showtimes")
+                        .HasForeignKey("MovieID1");
 
                     b.Navigation("Hall");
 

@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="CinemaManagement.API/CinemaManagement.API.csproj" />
+  <Project Path="CinemaManagement.MVC/CinemaManagement.MVC.csproj" Id="274a9c33-476f-4bb0-b8f0-4e5612d1b679" />
 </Solution>

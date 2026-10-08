@@ -25,30 +25,13 @@ namespace CinemaManagement.API.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Member>()
-                .HasOne(m => m.User)
-                .WithOne()
-                .HasForeignKey<Member>(m => m.UserID)
-                .OnDelete(DeleteBehavior.Restrict);
-
+            // ========== INDEXES ==========
             modelBuilder.Entity<Member>().HasIndex(m => m.UserID).IsUnique();
             modelBuilder.Entity<Member>().HasIndex(m => m.MembershipCode).IsUnique();
             modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
-
-            modelBuilder.Entity<Member>()
-                .HasOne(m => m.Tier)
-                .WithMany(t => t.Members)
-                .HasForeignKey(m => m.TierID)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Booking>()
-                .HasOne(b => b.Member)
-                .WithMany(m => m.Bookings)
-                .HasForeignKey(b => b.MemberID)
-                .OnDelete(DeleteBehavior.SetNull);
-
             modelBuilder.Entity<Booking>().HasIndex(b => b.BookingCode).IsUnique();
 
+            // ========== PRECISION ==========
             modelBuilder.Entity<MembershipTier>().Property(t => t.DiscountPercent).HasPrecision(5, 2);
             modelBuilder.Entity<MembershipTier>().Property(t => t.PointRate).HasPrecision(5, 2);
             modelBuilder.Entity<Showtime>().Property(s => s.BasePrice).HasPrecision(10, 2);
@@ -57,6 +40,74 @@ namespace CinemaManagement.API.Data
             modelBuilder.Entity<Booking>().Property(b => b.FinalAmount).HasPrecision(12, 2);
             modelBuilder.Entity<BookingDetail>().Property(d => d.Price).HasPrecision(10, 2);
 
+            // ========== RELATIONSHIPS ==========
+            modelBuilder.Entity<Member>()
+                .HasOne(m => m.User)
+                .WithOne()
+                .HasForeignKey<Member>(m => m.UserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Member>()
+                .HasOne(m => m.Tier)
+                .WithMany(t => t.Members)
+                .HasForeignKey(m => m.TierID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Movie>()
+                .HasOne(m => m.Genre)
+                .WithMany()
+                .HasForeignKey(m => m.GenreID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Seat>()
+                .HasOne(s => s.Hall)
+                .WithMany()
+                .HasForeignKey(s => s.HallID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Showtime>()
+                .HasOne(s => s.Movie)
+                .WithMany()
+                .HasForeignKey(s => s.MovieID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Showtime>()
+                .HasOne(s => s.Hall)
+                .WithMany()
+                .HasForeignKey(s => s.HallID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Booking>()
+                .HasOne(b => b.Showtime)
+                .WithMany()
+                .HasForeignKey(b => b.ShowtimeID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Booking>()
+                .HasOne(b => b.Member)
+                .WithMany(m => m.Bookings)
+                .HasForeignKey(b => b.MemberID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<BookingDetail>()
+                .HasOne(bd => bd.Booking)
+                .WithMany(b => b.BookingDetails)
+                .HasForeignKey(bd => bd.BookingID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BookingDetail>()
+                .HasOne(bd => bd.Seat)
+                .WithMany()
+                .HasForeignKey(bd => bd.SeatID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PointTransaction>()
+                .HasOne(pt => pt.Member)
+                .WithMany()
+                .HasForeignKey(pt => pt.MemberID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ========== SEED DATA ==========
             modelBuilder.Entity<MembershipTier>().HasData(
                 new MembershipTier { TierID = 1, TierName = "Silver", MinPoints = 0, DiscountPercent = 0, PointRate = 1, Description = "Hang co ban" },
                 new MembershipTier { TierID = 2, TierName = "Gold", MinPoints = 500, DiscountPercent = 5, PointRate = 1.5m, Description = "Hang vang - giam 5%" },

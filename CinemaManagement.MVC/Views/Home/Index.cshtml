@@ -1,0 +1,48 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center mb-4">
+    <h1 class="display-4">Cinema Management</h1>
+    <p class="lead">Hệ thống quản lý rạp chiếu phim & thành viên</p>
+</div>
+
+<!-- Kết quả test gọi API -->
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        @if (ViewBag.ApiTest != null)
+        {
+            @if (ViewBag.ApiTest.ToString()!.StartsWith("API OK"))
+            {
+                <div class="alert alert-success">
+                    <h5 class="alert-heading">Kết nối API thành công</h5>
+                    <hr>
+                    <pre class="mb-0" style="white-space: pre-wrap; word-break: break-all;">@ViewBag.ApiTest</pre>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-danger">
+                    <h5 class="alert-heading">Không kết nối được API</h5>
+                    <hr>
+                    <pre class="mb-0" style="white-space: pre-wrap; word-break: break-all;">@ViewBag.ApiTest</pre>
+                    <hr>
+                    <small>
+                        Kiểm tra:
+                        <ul class="mb-0">
+                            <li>API đã chạy chưa? (CinemaManagement.API)</li>
+                            <li>BaseUrl trong <code>appsettings.json</code> đúng port chưa?</li>
+                            <li>CORS đã bật ở API chưa?</li>
+                        </ul>
+                    </small>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="alert alert-warning">
+                Chưa có dữ liệu test API.
+            </div>
+        }
+    </div>
+</div>
