@@ -1,0 +1,55 @@
+﻿@model CinemaManagement.MVC.ViewModels.ShowtimeViewModel
+@{
+    ViewData["Title"] = "Thêm suất chiếu";
+    var movies = ViewBag.Movies as List<CinemaManagement.MVC.ViewModels.MovieViewModel> ?? new();
+    var halls = ViewBag.Halls as List<CinemaManagement.MVC.ViewModels.SelectItem> ?? new();
+}
+
+<h2>Thêm suất chiếu</h2>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="mb-3">
+        <label asp-for="MovieID" class="form-label">Phim *</label>
+        <select asp-for="MovieID" class="form-select">
+            <option value="">-- Chọn phim --</option>
+            @foreach (var m in movies)
+            {
+                <option value="@m.MovieID">@m.Title</option>
+            }
+        </select>
+        <span asp-validation-for="MovieID" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="HallID" class="form-label">Phòng chiếu *</label>
+        <select asp-for="HallID" class="form-select">
+            <option value="">-- Chọn phòng --</option>
+            @foreach (var h in halls)
+            {
+                <option value="@h.Id">@h.Name</option>
+            }
+        </select>
+        <span asp-validation-for="HallID" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="StartTime" class="form-label">Giờ chiếu *</label>
+        <input asp-for="StartTime" class="form-control" type="datetime-local" />
+        <span asp-validation-for="StartTime" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="BasePrice" class="form-label">Giá vé *</label>
+        <input asp-for="BasePrice" class="form-control" type="number" />
+        <span asp-validation-for="BasePrice" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

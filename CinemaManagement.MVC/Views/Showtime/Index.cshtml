@@ -1,0 +1,46 @@
+﻿@model List<CinemaManagement.MVC.ViewModels.ShowtimeViewModel>
+@{
+    ViewData["Title"] = "Suất chiếu";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Danh sách suất chiếu</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Thêm suất chiếu</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Phim</th>
+            <th>Phòng</th>
+            <th>Giờ chiếu</th>
+            <th>Giá vé</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td>@s.ShowtimeID</td>
+                <td>@s.MovieTitle</td>
+                <td>@s.HallName</td>
+                <td>@s.StartTime.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@s.BasePrice.ToString("N0") đ</td>
+                <td>
+                    <form asp-action="Delete" asp-route-id="@s.ShowtimeID" method="post" class="d-inline"
+                          onsubmit="return confirm('Xóa suất này?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

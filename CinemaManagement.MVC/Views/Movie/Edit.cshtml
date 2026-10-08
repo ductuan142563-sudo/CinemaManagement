@@ -1,0 +1,79 @@
+﻿@model CinemaManagement.MVC.ViewModels.MovieViewModel
+@{
+    ViewData["Title"] = "Sửa phim";
+    var genres = ViewBag.Genres as List<CinemaManagement.MVC.ViewModels.GenreItem> ?? new();
+}
+
+<h2 class="mb-4">Sửa phim</h2>
+
+<form asp-action="Edit" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <input type="hidden" asp-for="MovieID" />
+
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label">Tên phim *</label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Director" class="form-label">Đạo diễn</label>
+        <input asp-for="Director" class="form-control" />
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="Duration" class="form-label">Thời lượng (phút) *</label>
+            <input asp-for="Duration" class="form-control" type="number" min="1" />
+            <span asp-validation-for="Duration" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="GenreID" class="form-label">Thể loại</label>
+            <select asp-for="GenreID" class="form-select">
+                <option value="">-- Chọn thể loại --</option>
+                @foreach (var g in genres)
+                {
+                    <option value="@g.GenreID" selected="@(g.GenreID == Model.GenreID)">@g.GenreName</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="AgeRating" class="form-label">Độ tuổi</label>
+            <select asp-for="AgeRating" class="form-select">
+                <option value="">-- Chọn --</option>
+                <option value="P">P</option>
+                <option value="C13">C13</option>
+                <option value="C16">C16</option>
+                <option value="C18">C18</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ReleaseDate" class="form-label">Ngày phát hành</label>
+        <input asp-for="ReleaseDate" class="form-control" type="date" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="PosterUrl" class="form-label">URL Poster</label>
+        <input asp-for="PosterUrl" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label">Mô tả</label>
+        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+    </div>
+
+    <div class="mb-3 form-check">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label">Đang chiếu</label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Cập nhật</button>
+    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
