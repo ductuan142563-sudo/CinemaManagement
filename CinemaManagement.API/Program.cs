@@ -1,4 +1,5 @@
 using CinemaManagement.API.Data;
+using CinemaManagement.API.Middleware;
 using CinemaManagement.API.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,5 +26,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.Run();
