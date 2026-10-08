@@ -1,0 +1,172 @@
+﻿@model CinemaManagement.MVC.ViewModels.SeatMapVm
+@{
+    ViewData["Title"] = "Chọn ghế";
+    var memberId = ViewBag.MemberId as int?;
+    var seatsByRow = Model.Seats
+        .GroupBy(s => s.RowLabel)
+        .OrderBy(g => g.Key)
+        .ToList();
+}
+
+<style>
+    .screen {
+        background: #333;
+        color: #fff;
+        text-align: center;
+        padding: 8px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        letter-spacing: 4px;
+    }
+    .seat {
+        width: 42px;
+        height: 42px;
+        margin: 3px;
+        border: none;
+        border-radius: 6px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: 0.15s;
+    }
+    .seat.available { background: #28a745; color: #fff; }
+    .seat.available:hover { background: #1e7e34; transform: scale(1.08); }
+    .seat.selected { background: #fd7e14; color: #fff; }
+    .seat.booked { background: #6c757d; color: #fff; cursor: not-allowed; opacity: 0.7; }
+    .legend span { display: inline-block; width: 20px; height: 20px; border-radius: 4px; margin-right: 4px; vertical-align: middle; }
+</style>
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Chọn lại suất</a>
+</div>
+
+<h4>@Model.MovieTitle</h4>
+<p class="text-muted">
+    @Model.HallName · @Model.StartTime.ToString("dd/MM/yyyy HH:mm") ·
+    Giá: <strong>@Model.BasePrice.ToString("N0") đ</strong>/ghế
+</p>
+
+@if (memberId.HasValue)
+{
+    <div class="alert alert-info py-2">Thành viên – được áp dụng giảm giá & tích điểm</div>
+}
+
+<div class="screen">MÀN HÌNH</div>
+
+<div class="text-center mb-4" id="seatGrid">
+    @foreach (var row in seatsByRow)
+    {
+        <div class="d-flex justify-content-center align-items-center mb-1">
+            <span class="me-2 fw-bold" style="width:24px">@row.Key</span>
+            @foreach (var seat in row.OrderBy(s => s.SeatNumber))
+            {
+                var css = seat.IsBooked ? "booked" : "available";
+                <button type="button"
+                        class="seat @css"
+                        data-id="@seat.SeatId"
+                        data-name="@(string.IsNullOrEmpty(seat.DisplayName) ? $"{seat.RowLabel}{seat.SeatNumber}" : seat.DisplayName)"
+                        @(seat.IsBooked ? "disabled" : "")>
+                    @seat.SeatNumber
+                </button>
+            }
+        </div>
+    }
+</div>
+
+<div class="legend text-center mb-4">
+    <span style="background:#28a745"></span> Trống
+    <span style="background:#fd7e14" class="ms-3"></span> Đang chọn
+    <span style="background:#6c757d" class="ms-3"></span> Đã đặt
+</div>
+
+<div class="card shadow-sm mx-auto" style="max-width:420px">
+    <div class="card-body">
+        <p class="mb-1">Ghế đã chọn: <strong id="lblSeats">—</strong></p>
+        <p class="mb-1">Tổng tiền: <strong id="lblTotal">0 đ</strong></p>
+        <p class="mb-1 text-success">Giảm giá: <strong id="lblDiscount">0 đ</strong></p>
+        <p class="mb-1 text-warning">Điểm nhận: <strong id="lblPoints">0</strong></p>
+        <p class="mb-3 fs-5">Thành tiền: <strong id="lblFinal" class="text-danger">0 đ</strong></p>
+        <button id="btnPay" class="btn btn-primary w-100" disabled>THANH TOÁN</button>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const basePrice = @Model.BasePrice;
+    const showtimeId = @Model.ShowtimeId;
+    const memberId = @(memberId.HasValue ? memberId.Value.ToString() : "null");
+    // Tạm tính discount phía client (API sẽ tính chính xác khi thanh toán)
+    // Có thể gọi API profile để lấy DiscountPercent nếu muốn chính xác hơn
+    let discountPercent = 0;
+
+    const selected = new Map(); // seatId -> name
+
+    document.querySelectorAll('.seat.available').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            const name = btn.dataset.name;
+            if (selected.has(id)) {
+                selected.delete(id);
+                btn.classList.remove('selected');
+                btn.classList.add('available');
+            } else {
+                selected.set(id, name);
+                btn.classList.remove('available');
+                btn.classList.add('selected');
+            }
+            updateSummary();
+        });
+    });
+
+    function updateSummary() {
+        const count = selected.size;
+        const total = basePrice * count;
+        const discount = total * discountPercent / 100;
+        const final = total - discount;
+
+        document.getElementById('lblSeats').textContent = count
+            ? [...selected.values()].join(', ')
+            : '—';
+        document.getElementById('lblTotal').textContent = total.toLocaleString('vi-VN') + ' đ';
+        document.getElementById('lblDiscount').textContent = discount.toLocaleString('vi-VN') + ' đ';
+        document.getElementById('lblFinal').textContent = final.toLocaleString('vi-VN') + ' đ';
+        document.getElementById('lblPoints').textContent = '—'; // điểm do API tính
+        document.getElementById('btnPay').disabled = count === 0;
+    }
+
+    document.getElementById('btnPay').addEventListener('click', async () => {
+        if (selected.size === 0) return;
+
+        const body = {
+            showtimeId: showtimeId,
+            seatIds: [...selected.keys()],
+            memberId: memberId
+        };
+
+        const btn = document.getElementById('btnPay');
+        btn.disabled = true;
+        btn.textContent = 'Đang xử lý...';
+
+        try {
+            const res = await fetch('/Booking/Create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                alert(data.message || 'Đặt vé thành công!');
+                location.reload(); // refresh sơ đồ ghế
+            } else {
+                alert(data.message || 'Đặt vé thất bại.');
+                btn.disabled = false;
+                btn.textContent = 'THANH TOÁN';
+            }
+        } catch (e) {
+            alert('Lỗi kết nối: ' + e.message);
+            btn.disabled = false;
+            btn.textContent = 'THANH TOÁN';
+        }
+    });
+</script>
+}

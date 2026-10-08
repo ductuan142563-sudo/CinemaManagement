@@ -139,6 +139,7 @@ namespace CinemaManagement.API.Data
                 new Hall { HallID = 1, HallName = "Phong 1", TotalSeats = 80, RowsCount = 8, SeatsPerRow = 10 },
                 new Hall { HallID = 2, HallName = "Phong 2", TotalSeats = 60, RowsCount = 6, SeatsPerRow = 10 }
             );
+
         }
     }
 }

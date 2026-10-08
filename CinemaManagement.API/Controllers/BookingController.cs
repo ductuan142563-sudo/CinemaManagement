@@ -1,5 +1,6 @@
 ﻿using CinemaManagement.API.Data;
 using CinemaManagement.API.DTOs;
+using CinemaManagement.API.Models;
 using CinemaManagement.API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -104,6 +105,55 @@ namespace CinemaManagement.API.Controllers
                 return BadRequest(response);
 
             return Ok(response);
+        }
+        /// <summary>
+        /// Tạo ghế cho tất cả Hall chưa có ghế
+        /// GET: api/seed/seats
+        /// </summary>
+        [HttpGet("api/seed/seats")]
+        public async Task<IActionResult> SeedSeats()
+        {
+            var halls = await _context.Halls
+                .Include(h => h.Seats)
+                .ToListAsync();
+
+            int totalAdded = 0;
+            string rowLabels = "ABCDEFGHIJKLMNOP";
+
+            foreach (var hall in halls)
+            {
+                if (hall.Seats != null && hall.Seats.Any())
+                    continue; // đã có ghế rồi
+
+                int rows = hall.RowsCount > 0 ? hall.RowsCount : 8;
+                int cols = hall.SeatsPerRow > 0 ? hall.SeatsPerRow : 10;
+
+                var seats = new List<Seat>();
+                for (int r = 0; r < rows; r++)
+                {
+                    for (int c = 1; c <= cols; c++)
+                    {
+                        seats.Add(new Seat
+                        {
+                            HallID = hall.HallID,
+                            RowLabel = rowLabels[r].ToString(),
+                            SeatNumber = c,
+                            SeatType = "Standard"
+                        });
+                    }
+                }
+
+                _context.Seats.AddRange(seats);
+                totalAdded += seats.Count;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = $"Đã tạo {totalAdded} ghế.",
+                halls = halls.Count
+            });
         }
 
         /// <summary>

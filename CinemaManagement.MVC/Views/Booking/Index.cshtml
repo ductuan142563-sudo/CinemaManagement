@@ -1,0 +1,76 @@
+﻿@model CinemaManagement.MVC.ViewModels.BookingIndexViewModel
+@{
+    ViewData["Title"] = "Đặt vé";
+    var memberId = ViewBag.MemberId as int?;
+}
+
+<h2 class="mb-4">Đặt vé xem phim</h2>
+
+@if (memberId.HasValue)
+{
+    <div class="alert alert-info">
+        Bạn đang đặt vé với tư cách <strong>Thành viên</strong> (MemberId: @memberId) – sẽ được giảm giá & cộng điểm.
+    </div>
+}
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <label class="form-label">Chọn phim</label>
+        <select id="cboMovie" class="form-select">
+            <option value="">-- Chọn phim --</option>
+            @foreach (var m in Model.Movies)
+            {
+                <option value="@m.MovieID">@m.Title</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Chọn suất chiếu</label>
+        <select id="cboShowtime" class="form-select" disabled>
+            <option value="">-- Chọn suất --</option>
+        </select>
+    </div>
+</div>
+
+<div id="seatMapContainer">
+    <p class="text-muted">Vui lòng chọn phim và suất chiếu để xem sơ đồ ghế.</p>
+</div>
+
+@section Scripts {
+<script>
+    document.getElementById('cboMovie').addEventListener('change', async function () {
+        const movieId = this.value;
+        const cboShowtime = document.getElementById('cboShowtime');
+        cboShowtime.innerHTML = '<option value="">-- Đang tải --</option>';
+        cboShowtime.disabled = true;
+        document.getElementById('seatMapContainer').innerHTML = '';
+
+        if (!movieId) {
+            cboShowtime.innerHTML = '<option value="">-- Chọn suất --</option>';
+            return;
+        }
+
+        const res = await fetch(`/Booking/GetShowtimes?movieId=${movieId}`);
+        const data = await res.json();
+
+        cboShowtime.innerHTML = '<option value="">-- Chọn suất --</option>';
+        data.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.showtimeID ?? s.ShowtimeID;
+            opt.text = s.display ?? s.Display ?? `${s.startTime} - ${s.basePrice}đ`;
+            cboShowtime.appendChild(opt);
+        });
+        cboShowtime.disabled = false;
+    });
+
+    document.getElementById('cboShowtime').addEventListener('change', function () {
+        const showtimeId = this.value;
+        if (!showtimeId) {
+            document.getElementById('seatMapContainer').innerHTML = '';
+            return;
+        }
+        // Load seat map bằng cách redirect hoặc fetch partial
+        window.location.href = `/Booking/SeatMap?showtimeId=${showtimeId}`;
+    });
+</script>
+}
