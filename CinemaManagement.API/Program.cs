@@ -12,6 +12,7 @@ builder.Services.AddDbContext<CinemaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<MembershipService>();
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 
