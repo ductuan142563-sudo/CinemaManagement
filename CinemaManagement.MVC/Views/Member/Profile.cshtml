@@ -1,0 +1,128 @@
+﻿@model CinemaManagement.MVC.ViewModels.MemberPageViewModel
+@{
+    ViewData["Title"] = "Hồ sơ thành viên";
+    var p = Model.Profile;
+    var isMemberRole = Context.Session.GetString("Role") == "Member";
+}
+
+<h2 class="mb-3">Hồ sơ thành viên</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.MemberId == null)
+{
+    @* Admin/Staff: nhập mã thành viên để tra cứu *@
+    <form method="get" asp-action="Profile" class="row g-2" style="max-width: 420px;">
+        <div class="col">
+            <input type="number" name="id" min="1" required class="form-control" placeholder="Nhập MemberId" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Xem hồ sơ</button>
+        </div>
+    </form>
+}
+else if (p != null)
+{
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">@p.FullName</h5>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Mã thành viên</dt>
+                        <dd class="col-sm-7">@p.MembershipCode</dd>
+
+                        <dt class="col-sm-5">Hạng</dt>
+                        <dd class="col-sm-7"><span class="badge bg-secondary">@p.TierName</span></dd>
+
+                        <dt class="col-sm-5">Điểm hiện tại</dt>
+                        <dd class="col-sm-7"><strong>@p.CurrentPoints.ToString("N0")</strong></dd>
+
+                        <dt class="col-sm-5">Tổng điểm</dt>
+                        <dd class="col-sm-7">@p.TotalPoints.ToString("N0")</dd>
+
+                        <dt class="col-sm-5">% Giảm giá</dt>
+                        <dd class="col-sm-7">@p.DiscountPercent%</dd>
+
+                        <dt class="col-sm-5">Ngày tham gia</dt>
+                        <dd class="col-sm-7">@p.JoinDate.ToString("dd/MM/yyyy")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Đổi điểm</h5>
+
+                    @if (p.CurrentPoints <= 0)
+                    {
+                        <p class="text-muted mb-0">Bạn chưa có điểm để đổi. Đặt vé để tích điểm nhé.</p>
+                    }
+                    else
+                    {
+                        <form method="post" asp-action="Redeem">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="memberId" value="@p.MemberId" />
+
+                            <label for="pointsToRedeem" class="form-label">Số điểm muốn đổi</label>
+                            <div class="input-group">
+                                <input type="number" id="pointsToRedeem" name="pointsToRedeem"
+                                       class="form-control" required min="1" max="@p.CurrentPoints"
+                                       placeholder="Tối đa @p.CurrentPoints.ToString("N0")" />
+                                <button type="submit" class="btn btn-primary">Đổi điểm</button>
+                            </div>
+                            <div class="form-text">Bạn đang có @p.CurrentPoints.ToString("N0") điểm.</div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+        <h5 class="mb-0">Lịch sử điểm (20 giao dịch mới nhất)</h5>
+        <a asp-action="PointHistory" asp-route-id="@(isMemberRole ? null : p.MemberId)">Xem tất cả</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Thời gian</th>
+                    <th>Loại</th>
+                    <th class="text-end">Điểm</th>
+                    <th>Mô tả</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Transactions.Count == 0)
+                {
+                    <tr><td colspan="4" class="text-center text-muted">Chưa có giao dịch điểm nào.</td></tr>
+                }
+                else
+                {
+                    @foreach (var t in Model.Transactions)
+                    {
+                        <tr>
+                            <td>@t.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@t.Type</td>
+                            <td class="text-end @(t.Points >= 0 ? "text-success" : "text-danger")">
+                                @(t.Points > 0 ? "+" + t.Points.ToString("N0") : t.Points.ToString("N0"))
+                            </td>
+                            <td>@t.Description</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+}

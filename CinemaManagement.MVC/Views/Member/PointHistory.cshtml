@@ -1,0 +1,46 @@
+﻿@model CinemaManagement.MVC.ViewModels.MemberPageViewModel
+@{
+    ViewData["Title"] = "Lịch sử điểm";
+    var isMemberRole = Context.Session.GetString("Role") == "Member";
+}
+
+<a asp-action="Profile" asp-route-id="@(isMemberRole ? null : Model.MemberId)" class="btn btn-link px-0">&larr; Quay lại hồ sơ</a>
+<h2 class="mb-3">Lịch sử điểm</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Thời gian</th>
+                <th>Loại</th>
+                <th class="text-end">Điểm</th>
+                <th>Mô tả</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Transactions.Count == 0)
+            {
+                <tr><td colspan="4" class="text-center text-muted">Chưa có giao dịch điểm nào.</td></tr>
+            }
+            else
+            {
+                @foreach (var t in Model.Transactions)
+                {
+                    <tr>
+                        <td>@t.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@t.Type</td>
+                        <td class="text-end @(t.Points >= 0 ? "text-success" : "text-danger")">
+                            @(t.Points > 0 ? "+" + t.Points.ToString("N0") : t.Points.ToString("N0"))
+                        </td>
+                        <td>@t.Description</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

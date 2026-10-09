@@ -137,7 +137,6 @@ public class BookingController : Controller
         }
     }
 
-    // Giả định PART 2 lưu MemberId bằng SetString
-    private int? GetSessionMemberId() =>
-        int.TryParse(HttpContext.Session.GetString("MemberId"), out var id) ? id : null;
+    // Đọc MemberId từ Session (chịu được cả SetString lẫn SetInt32)
+    private int? GetSessionMemberId() => HttpContext.Session.GetMemberIdOrNull();
 }
