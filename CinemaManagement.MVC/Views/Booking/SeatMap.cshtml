@@ -1,172 +1,78 @@
-﻿@model CinemaManagement.MVC.ViewModels.SeatMapVm
+﻿@model CinemaManagement.MVC.ViewModels.BookingPageViewModel
 @{
     ViewData["Title"] = "Chọn ghế";
-    var memberId = ViewBag.MemberId as int?;
-    var seatsByRow = Model.Seats
-        .GroupBy(s => s.RowLabel)
-        .OrderBy(g => g.Key)
-        .ToList();
 }
 
-<style>
-    .screen {
-        background: #333;
-        color: #fff;
-        text-align: center;
-        padding: 8px;
-        margin-bottom: 20px;
-        border-radius: 4px;
-        letter-spacing: 4px;
-    }
-    .seat {
-        width: 42px;
-        height: 42px;
-        margin: 3px;
-        border: none;
-        border-radius: 6px;
-        font-size: 11px;
-        cursor: pointer;
-        transition: 0.15s;
-    }
-    .seat.available { background: #28a745; color: #fff; }
-    .seat.available:hover { background: #1e7e34; transform: scale(1.08); }
-    .seat.selected { background: #fd7e14; color: #fff; }
-    .seat.booked { background: #6c757d; color: #fff; cursor: not-allowed; opacity: 0.7; }
-    .legend span { display: inline-block; width: 20px; height: 20px; border-radius: 4px; margin-right: 4px; vertical-align: middle; }
-</style>
-
-<div class="mb-3">
-    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Chọn lại suất</a>
-</div>
-
-<h4>@Model.MovieTitle</h4>
-<p class="text-muted">
-    @Model.HallName · @Model.StartTime.ToString("dd/MM/yyyy HH:mm") ·
-    Giá: <strong>@Model.BasePrice.ToString("N0") đ</strong>/ghế
-</p>
-
-@if (memberId.HasValue)
-{
-    <div class="alert alert-info py-2">Thành viên – được áp dụng giảm giá & tích điểm</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/booking.css" asp-append-version="true" />
 }
 
-<div class="screen">MÀN HÌNH</div>
+@Html.AntiForgeryToken()
 
-<div class="text-center mb-4" id="seatGrid">
-    @foreach (var row in seatsByRow)
+<div id="bookingRoot"
+     data-showtime-id="@Model.ShowtimeId"
+     data-discount-percent="@(Model.Member?.DiscountPercent ?? 0)"
+     data-vnd-per-point="@Model.VndPerPoint">
+
+    @if (TempData["Error"] != null)
     {
-        <div class="d-flex justify-content-center align-items-center mb-1">
-            <span class="me-2 fw-bold" style="width:24px">@row.Key</span>
-            @foreach (var seat in row.OrderBy(s => s.SeatNumber))
-            {
-                var css = seat.IsBooked ? "booked" : "available";
-                <button type="button"
-                        class="seat @css"
-                        data-id="@seat.SeatId"
-                        data-name="@(string.IsNullOrEmpty(seat.DisplayName) ? $"{seat.RowLabel}{seat.SeatNumber}" : seat.DisplayName)"
-                        @(seat.IsBooked ? "disabled" : "")>
-                    @seat.SeatNumber
-                </button>
-            }
-        </div>
+        <div class="alert alert-warning">@TempData["Error"]</div>
     }
-</div>
 
-<div class="legend text-center mb-4">
-    <span style="background:#28a745"></span> Trống
-    <span style="background:#fd7e14" class="ms-3"></span> Đang chọn
-    <span style="background:#6c757d" class="ms-3"></span> Đã đặt
-</div>
+    <a asp-action="Index" class="btn btn-link px-0">&larr; Chọn suất khác</a>
+    <h3 id="movieTitle" class="mb-0">Đang tải...</h3>
+    <p id="showtimeInfo" class="text-muted"></p>
 
-<div class="card shadow-sm mx-auto" style="max-width:420px">
-    <div class="card-body">
-        <p class="mb-1">Ghế đã chọn: <strong id="lblSeats">—</strong></p>
-        <p class="mb-1">Tổng tiền: <strong id="lblTotal">0 đ</strong></p>
-        <p class="mb-1 text-success">Giảm giá: <strong id="lblDiscount">0 đ</strong></p>
-        <p class="mb-1 text-warning">Điểm nhận: <strong id="lblPoints">0</strong></p>
-        <p class="mb-3 fs-5">Thành tiền: <strong id="lblFinal" class="text-danger">0 đ</strong></p>
-        <button id="btnPay" class="btn btn-primary w-100" disabled>THANH TOÁN</button>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="screen">MÀN HÌNH</div>
+            <div id="seatGrid" class="seat-grid"></div>
+
+            <div class="seat-legend mt-3">
+                <span><i class="seat available"></i> Ghế trống</span>
+                <span><i class="seat selected"></i> Đang chọn</span>
+                <span><i class="seat booked"></i> Đã đặt</span>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            @if (Model.IsMember && Model.Member != null)
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title">Thành viên</h6>
+                        <div>Mã: <strong>@Model.Member.MembershipCode</strong></div>
+                        <div>Hạng: <strong>@Model.Member.TierName</strong> (giảm @Model.Member.DiscountPercent%)</div>
+                        <div>Điểm hiện tại: <strong>@Model.Member.CurrentPoints.ToString("N0")</strong></div>
+                    </div>
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Ghế đã chọn</h6>
+                    <div id="selectedSeats" class="mb-3 text-muted">Chưa chọn ghế</div>
+
+                    <dl class="row mb-0">
+                        <dt class="col-6">Tổng tiền</dt>
+                        <dd class="col-6 text-end" id="totalAmount">0đ</dd>
+                        <dt class="col-6">Giảm giá</dt>
+                        <dd class="col-6 text-end text-success" id="discountAmount">0đ</dd>
+                        <dt class="col-6">Điểm sẽ nhận</dt>
+                        <dd class="col-6 text-end" id="pointsEarned">0</dd>
+                        <dt class="col-6 fs-5">Thành tiền</dt>
+                        <dd class="col-6 text-end fs-5 fw-bold" id="finalAmount">0đ</dd>
+                    </dl>
+                    <div class="form-text mb-3" id="estimateNote"></div>
+
+                    <button id="btnBook" class="btn btn-primary w-100" disabled>Thanh toán</button>
+                    <div id="bookingMessage" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 @section Scripts {
-<script>
-    const basePrice = @Model.BasePrice;
-    const showtimeId = @Model.ShowtimeId;
-    const memberId = @(memberId.HasValue ? memberId.Value.ToString() : "null");
-    // Tạm tính discount phía client (API sẽ tính chính xác khi thanh toán)
-    // Có thể gọi API profile để lấy DiscountPercent nếu muốn chính xác hơn
-    let discountPercent = 0;
-
-    const selected = new Map(); // seatId -> name
-
-    document.querySelectorAll('.seat.available').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = parseInt(btn.dataset.id);
-            const name = btn.dataset.name;
-            if (selected.has(id)) {
-                selected.delete(id);
-                btn.classList.remove('selected');
-                btn.classList.add('available');
-            } else {
-                selected.set(id, name);
-                btn.classList.remove('available');
-                btn.classList.add('selected');
-            }
-            updateSummary();
-        });
-    });
-
-    function updateSummary() {
-        const count = selected.size;
-        const total = basePrice * count;
-        const discount = total * discountPercent / 100;
-        const final = total - discount;
-
-        document.getElementById('lblSeats').textContent = count
-            ? [...selected.values()].join(', ')
-            : '—';
-        document.getElementById('lblTotal').textContent = total.toLocaleString('vi-VN') + ' đ';
-        document.getElementById('lblDiscount').textContent = discount.toLocaleString('vi-VN') + ' đ';
-        document.getElementById('lblFinal').textContent = final.toLocaleString('vi-VN') + ' đ';
-        document.getElementById('lblPoints').textContent = '—'; // điểm do API tính
-        document.getElementById('btnPay').disabled = count === 0;
-    }
-
-    document.getElementById('btnPay').addEventListener('click', async () => {
-        if (selected.size === 0) return;
-
-        const body = {
-            showtimeId: showtimeId,
-            seatIds: [...selected.keys()],
-            memberId: memberId
-        };
-
-        const btn = document.getElementById('btnPay');
-        btn.disabled = true;
-        btn.textContent = 'Đang xử lý...';
-
-        try {
-            const res = await fetch('/Booking/Create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            const data = await res.json();
-
-            if (res.ok && data.success) {
-                alert(data.message || 'Đặt vé thành công!');
-                location.reload(); // refresh sơ đồ ghế
-            } else {
-                alert(data.message || 'Đặt vé thất bại.');
-                btn.disabled = false;
-                btn.textContent = 'THANH TOÁN';
-            }
-        } catch (e) {
-            alert('Lỗi kết nối: ' + e.message);
-            btn.disabled = false;
-            btn.textContent = 'THANH TOÁN';
-        }
-    });
-</script>
+    <script src="~/js/booking.js" asp-append-version="true"></script>
 }

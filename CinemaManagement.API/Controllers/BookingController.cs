@@ -27,25 +27,33 @@ namespace CinemaManagement.API.Controllers
         [HttpGet("seatmap/{showtimeId}")]
         public async Task<ActionResult<ShowtimeSeatMapResponse>> GetSeatMap(int showtimeId)
         {
+            // Không Include Hall.Seats nữa: ghế sẽ được truy vấn trực tiếp theo HallID bên dưới
             var showtime = await _context.Showtimes
                 .Include(s => s.Movie)
                 .Include(s => s.Hall)
-                    .ThenInclude(h => h.Seats)
                 .FirstOrDefaultAsync(s => s.ShowtimeID == showtimeId);
 
             if (showtime == null)
                 return NotFound(new { message = "Suất chiếu không tồn tại." });
 
             // Lấy ghế đã đặt
-            var bookedSeatIds = await _context.BookingDetails
+            var bookedSeatIds = (await _context.BookingDetails
                 .Include(bd => bd.Booking)
                 .Where(bd => bd.Booking.ShowtimeID == showtimeId && bd.Booking.Status == "Paid")
                 .Select(bd => bd.SeatID)
-                .ToListAsync();
+                .ToListAsync())
+                .ToHashSet();
 
-            var seats = showtime.Hall.Seats
+            // Lấy toàn bộ ghế của phòng chiếu trực tiếp từ bảng Seats
+            var hallId = showtime.Hall?.HallID ?? 0;
+
+            var hallSeats = await _context.Seats
+                .Where(s => s.HallID == hallId)
                 .OrderBy(s => s.RowLabel)
                 .ThenBy(s => s.SeatNumber)
+                .ToListAsync();
+
+            var seats = hallSeats
                 .Select(s => new SeatStatusDto
                 {
                     SeatId = s.SeatID,
@@ -106,23 +114,24 @@ namespace CinemaManagement.API.Controllers
 
             return Ok(response);
         }
+
         /// <summary>
         /// Tạo ghế cho tất cả Hall chưa có ghế
-        /// GET: api/seed/seats
+        /// GET: api/booking/api/seed/seats
         /// </summary>
         [HttpGet("api/seed/seats")]
         public async Task<IActionResult> SeedSeats()
         {
-            var halls = await _context.Halls
-                .Include(h => h.Seats)
-                .ToListAsync();
+            var halls = await _context.Halls.ToListAsync();
 
             int totalAdded = 0;
             string rowLabels = "ABCDEFGHIJKLMNOP";
 
             foreach (var hall in halls)
             {
-                if (hall.Seats != null && hall.Seats.Any())
+                // Kiểm tra trực tiếp bảng Seats (không dùng hall.Seats) để tránh tạo trùng
+                bool hasSeats = await _context.Seats.AnyAsync(s => s.HallID == hall.HallID);
+                if (hasSeats)
                     continue; // đã có ghế rồi
 
                 int rows = hall.RowsCount > 0 ? hall.RowsCount : 8;

@@ -1,76 +1,64 @@
-﻿@model CinemaManagement.MVC.ViewModels.BookingIndexViewModel
+﻿@model List<CinemaManagement.MVC.ViewModels.MovieOptionViewModel>
 @{
     ViewData["Title"] = "Đặt vé";
-    var memberId = ViewBag.MemberId as int?;
 }
 
-<h2 class="mb-4">Đặt vé xem phim</h2>
+<h2 class="mb-3">Đặt vé</h2>
 
-@if (memberId.HasValue)
+@if (TempData["Error"] != null)
 {
-    <div class="alert alert-info">
-        Bạn đang đặt vé với tư cách <strong>Thành viên</strong> (MemberId: @memberId) – sẽ được giảm giá & cộng điểm.
-    </div>
+    <div class="alert alert-danger">@TempData["Error"]</div>
 }
 
-<div class="row mb-4">
-    <div class="col-md-6">
-        <label class="form-label">Chọn phim</label>
-        <select id="cboMovie" class="form-select">
+<div class="row g-3">
+    <div class="col-md-4">
+        <label for="movieSelect" class="form-label">1. Chọn phim</label>
+        <select id="movieSelect" class="form-select">
             <option value="">-- Chọn phim --</option>
-            @foreach (var m in Model.Movies)
+            @foreach (var m in Model)
             {
-                <option value="@m.MovieID">@m.Title</option>
+                <option value="@m.MovieId">@m.Title</option>
             }
         </select>
     </div>
-    <div class="col-md-6">
-        <label class="form-label">Chọn suất chiếu</label>
-        <select id="cboShowtime" class="form-select" disabled>
-            <option value="">-- Chọn suất --</option>
-        </select>
+    <div class="col-md-8">
+        <label class="form-label">2. Chọn suất chiếu</label>
+        <div id="showtimeList" class="list-group">
+            <div class="text-muted">Hãy chọn phim để xem suất chiếu.</div>
+        </div>
     </div>
 </div>
 
-<div id="seatMapContainer">
-    <p class="text-muted">Vui lòng chọn phim và suất chiếu để xem sơ đồ ghế.</p>
-</div>
-
 @section Scripts {
-<script>
-    document.getElementById('cboMovie').addEventListener('change', async function () {
-        const movieId = this.value;
-        const cboShowtime = document.getElementById('cboShowtime');
-        cboShowtime.innerHTML = '<option value="">-- Đang tải --</option>';
-        cboShowtime.disabled = true;
-        document.getElementById('seatMapContainer').innerHTML = '';
+    <script>
+        const fmtMoney = v => Number(v).toLocaleString('vi-VN') + 'đ';
 
-        if (!movieId) {
-            cboShowtime.innerHTML = '<option value="">-- Chọn suất --</option>';
-            return;
-        }
+        document.getElementById('movieSelect').addEventListener('change', async function () {
+            const box = document.getElementById('showtimeList');
+            box.replaceChildren();
+            if (!this.value) { box.textContent = 'Hãy chọn phim để xem suất chiếu.'; return; }
 
-        const res = await fetch(`/Booking/GetShowtimes?movieId=${movieId}`);
-        const data = await res.json();
+            box.textContent = 'Đang tải...';
+            try {
+                const res = await fetch('/Booking/Showtimes?movieId=' + encodeURIComponent(this.value));
+                const json = await res.json();
+                box.replaceChildren();
+                if (!json.success) { box.textContent = json.message; return; }
+                if (json.data.length === 0) { box.textContent = 'Phim này chưa có suất chiếu sắp tới.'; return; }
 
-        cboShowtime.innerHTML = '<option value="">-- Chọn suất --</option>';
-        data.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.showtimeID ?? s.ShowtimeID;
-            opt.text = s.display ?? s.Display ?? `${s.startTime} - ${s.basePrice}đ`;
-            cboShowtime.appendChild(opt);
+                json.data.forEach(s => {
+                    const a = document.createElement('a');
+                    a.className = 'list-group-item list-group-item-action d-flex justify-content-between';
+                    a.href = '/Booking/SeatMap?showtimeId=' + s.showtimeId;
+                    const t = new Date(s.startTime).toLocaleString('vi-VN');
+                    a.innerHTML = '<span></span><span class="text-muted"></span>';
+                    a.children[0].textContent = t + ' — ' + s.hallName;
+                    a.children[1].textContent = 'Giá từ ' + fmtMoney(s.basePrice);
+                    box.appendChild(a);
+                });
+            } catch {
+                box.textContent = 'Không tải được suất chiếu.';
+            }
         });
-        cboShowtime.disabled = false;
-    });
-
-    document.getElementById('cboShowtime').addEventListener('change', function () {
-        const showtimeId = this.value;
-        if (!showtimeId) {
-            document.getElementById('seatMapContainer').innerHTML = '';
-            return;
-        }
-        // Load seat map bằng cách redirect hoặc fetch partial
-        window.location.href = `/Booking/SeatMap?showtimeId=${showtimeId}`;
-    });
-</script>
+    </script>
 }
