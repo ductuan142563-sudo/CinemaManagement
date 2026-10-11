@@ -1,48 +1,171 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@using System.Globalization
+@using CinemaManagement.MVC.Helpers
+@using CinemaManagement.MVC.ViewModels
+@model HomePageViewModel
+@{
+    ViewData["Title"] = "Trang chủ";
+    var role = SessionHelper.GetRole(Context.Session);
+
+    // Nội dung dải thông tin chạy ở cuối trang (bạn sửa chữ tùy ý)
+    var promos = new[]
+    {
+        (Title: "Tích điểm sau mỗi lần đặt vé", Text: "Điểm được cộng ngay khi thanh toán, đổi điểm trong mục Hồ sơ."),
+        (Title: "Chọn đúng ghế bạn thích", Text: "Xem sơ đồ phòng chiếu và chọn ghế trực tiếp trước khi thanh toán."),
+        (Title: "Hạng thành viên càng cao, giảm giá càng nhiều", Text: "Mức giảm áp dụng tự động khi bạn đặt vé."),
+        (Title: "Suất chiếu được cập nhật thường xuyên", Text: "Quay lại trang này để xem các suất chiếu mới."),
+        (Title: "Chưa có tài khoản thành viên?", Text: "Đăng ký miễn phí để bắt đầu tích điểm từ vé đầu tiên.")
+    };
 }
 
-<div class="text-center mb-4">
-    <h1 class="display-4">Cinema Management</h1>
-    <p class="lead">Hệ thống quản lý rạp chiếu phim & thành viên</p>
-</div>
+@functions {
+    static string DayLabel(DateTime d)
+    {
+        var today = DateTime.Today;
+        if (d.Date == today) return "Hôm nay";
+        if (d.Date == today.AddDays(1)) return "Ngày mai";
 
-<!-- Kết quả test gọi API -->
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        @if (ViewBag.ApiTest != null)
+        var dow = d.DayOfWeek switch
         {
-            @if (ViewBag.ApiTest.ToString()!.StartsWith("API OK"))
-            {
-                <div class="alert alert-success">
-                    <h5 class="alert-heading">Kết nối API thành công</h5>
-                    <hr>
-                    <pre class="mb-0" style="white-space: pre-wrap; word-break: break-all;">@ViewBag.ApiTest</pre>
+            DayOfWeek.Monday => "T2",
+            DayOfWeek.Tuesday => "T3",
+            DayOfWeek.Wednesday => "T4",
+            DayOfWeek.Thursday => "T5",
+            DayOfWeek.Friday => "T6",
+            DayOfWeek.Saturday => "T7",
+            _ => "CN"
+        };
+        return $"{dow}, {d:dd/MM}";
+    }
+
+    static string Money(decimal value) =>
+        value.ToString("N0", new CultureInfo("vi-VN")) + "đ";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+}
+
+@if (!Model.IsLoggedIn)
+{
+    <section class="guest-hero">
+        <div class="logo-mark" aria-hidden="true"></div>
+        <h1 class="logo-word">Cinema Management</h1>
+        <p class="logo-tag">Đặt vé xem phim, chọn ghế yêu thích và tích điểm sau mỗi suất chiếu.</p>
+        <div class="d-flex flex-wrap gap-2 justify-content-center">
+            <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-lg">Đăng nhập</a>
+            <a asp-controller="Account" asp-action="Register" class="btn btn-outline-primary btn-lg">Đăng ký</a>
+        </div>
+    </section>
+}
+else
+{
+    @if (Model.LoadFailed)
+    {
+        <div class="alert alert-warning">
+            Chưa tải được danh sách suất chiếu. Vui lòng tải lại trang sau ít phút.
+        </div>
+    }
+
+    @if (Model.NextMovie != null && Model.NextShowtime != null)
+    {
+        var m = Model.NextMovie;
+        var st = Model.NextShowtime;
+
+        <section class="next-ticket" style="--hue:@m.PosterHue" aria-label="Suất chiếu tiếp theo">
+            <div class="next-ticket__main">
+                <p class="next-ticket__label">Suất chiếu tiếp theo</p>
+                <h1 class="next-ticket__title">@m.Title</h1>
+                <div class="meta">
+                    @if (!string.IsNullOrWhiteSpace(m.GenreName))
+                    {
+                        <span>@m.GenreName</span>
+                    }
+                    <span>@m.Duration phút</span>
+                    @if (!string.IsNullOrWhiteSpace(m.AgeRating))
+                    {
+                        <span>Phân loại @m.AgeRating</span>
+                    }
                 </div>
-            }
-            else
-            {
-                <div class="alert alert-danger">
-                    <h5 class="alert-heading">Không kết nối được API</h5>
-                    <hr>
-                    <pre class="mb-0" style="white-space: pre-wrap; word-break: break-all;">@ViewBag.ApiTest</pre>
-                    <hr>
-                    <small>
-                        Kiểm tra:
-                        <ul class="mb-0">
-                            <li>API đã chạy chưa? (CinemaManagement.API)</li>
-                            <li>BaseUrl trong <code>appsettings.json</code> đúng port chưa?</li>
-                            <li>CORS đã bật ở API chưa?</li>
-                        </ul>
-                    </small>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="alert alert-warning">
-                Chưa có dữ liệu test API.
             </div>
-        }
+            <div class="next-ticket__stub">
+                <div class="stub-time">@st.StartTime.ToString("HH:mm")</div>
+                <div class="stub-day">@DayLabel(st.StartTime)</div>
+                <div class="stub-hall">@st.HallName</div>
+                <div class="stub-price">@Money(st.BasePrice)</div>
+                <a asp-controller="Booking" asp-action="SeatMap" asp-route-showtimeId="@st.ShowtimeID"
+                   class="btn btn-primary mt-3">Đặt vé suất này</a>
+            </div>
+        </section>
+    }
+
+    <div class="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-3">
+        <h2 class="section-title mb-0">Suất chiếu sắp tới</h2>
+        <a asp-controller="Booking" asp-action="Index">Đặt vé theo phim</a>
     </div>
-</div>
+
+    @if (Model.Cards.Count == 0 && !Model.LoadFailed)
+    {
+        <div class="empty-state">
+            <p class="mb-3">Hiện chưa có suất chiếu sắp tới.</p>
+            @if (role == "Admin" || role == "Staff")
+            {
+                <a asp-controller="Showtime" asp-action="Create" class="btn btn-primary">Thêm suất chiếu</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="movie-grid">
+            @foreach (var card in Model.Cards)
+            {
+                <article class="movie-card">
+                    <div class="poster" style="--hue:@card.PosterHue">
+                        @if (!string.IsNullOrWhiteSpace(card.AgeRating))
+                        {
+                            <span class="poster__age">@card.AgeRating</span>
+                        }
+                        <h3 class="poster__title">@card.Title</h3>
+                    </div>
+
+                    <div class="movie-card__meta">
+                        @if (!string.IsNullOrWhiteSpace(card.GenreName))
+                        {
+                            <span>@card.GenreName</span>
+                        }
+                        <span>@card.Duration phút</span>
+                    </div>
+
+                    @foreach (var day in card.Showtimes.GroupBy(s => s.StartTime.Date).OrderBy(g => g.Key).Take(2))
+                    {
+                        <div class="showtime-row">
+                            <span class="showtime-day">@DayLabel(day.Key)</span>
+                            @foreach (var s in day)
+                            {
+                                <a class="time-chip" asp-controller="Booking" asp-action="SeatMap"
+                                   asp-route-showtimeId="@s.ShowtimeID"
+                                   title="@(s.HallName), @Money(s.BasePrice)">@s.StartTime.ToString("HH:mm")</a>
+                            }
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    }
+
+    <section class="promo" aria-label="Ưu đãi và thông tin">
+        <div class="promo__track">
+            @for (var pass = 0; pass < 2; pass++)
+            {
+                <ul class="promo__list" aria-hidden="@(pass == 1 ? "true" : null)">
+                    @foreach (var p in promos)
+                    {
+                        <li class="promo__item">
+                            <strong>@p.Title</strong>
+                            <span>@p.Text</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </section>
+}

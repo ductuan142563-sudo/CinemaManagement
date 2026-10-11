@@ -5,21 +5,28 @@
     var fullName = SessionHelper.GetFullName(Context.Session) ?? SessionHelper.GetUsername(Context.Session);
 }
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-bs-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Cinema Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/cinema-theme.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3">
+        <nav class="navbar navbar-expand-sm navbar-dark cinema-nav">
             <div class="container">
-                <a class="navbar-brand" asp-controller="Home" asp-action="Index">Cinema Management</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                    <span class="brand-mark" aria-hidden="true"></span>Cinema Management
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                        aria-controls="mainNav" aria-expanded="false" aria-label="Mở menu">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
@@ -48,11 +55,14 @@
                         }
                     </ul>
 
-                    <ul class="navbar-nav">
+                    <ul class="navbar-nav align-items-sm-center">
                         @if (isLoggedIn)
                         {
                             <li class="nav-item">
-                                <span class="navbar-text text-light me-3">Xin chào, @fullName</span>
+                                <span class="navbar-text nav-user me-3">
+                                    Xin chào, @fullName
+                                    <span class="role-pill">@role</span>
+                                </span>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Account" asp-action="Logout">Đăng xuất</a>

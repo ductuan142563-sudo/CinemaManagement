@@ -1,0 +1,399 @@
+﻿/* ============ Cinema theme ============ */
+:root {
+    --ink: #15121c;
+    --panel: #201c2b;
+    --panel-2: #2a2536;
+    --line: #3a3447;
+    --cream: #f5efe3;
+    --muted: #a79fb8;
+    --velvet: #b8283a;
+    --velvet-hover: #d03449;
+    --gold: #f2b84b;
+    --gold-ink: #2a1d05;
+}
+
+html {
+    color-scheme: dark;
+}
+
+body {
+    font-family: 'Be Vietnam Pro', system-ui, 'Segoe UI', Roboto, sans-serif;
+    background: var(--ink);
+    color: var(--cream);
+    min-height: 100vh;
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+    body > .container {
+        flex: 1 0 auto;
+        width: 100%;
+    }
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--cream);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+a {
+    color: var(--gold);
+}
+
+    a:hover {
+        color: #ffd27a;
+    }
+
+hr {
+    border-color: var(--line);
+    opacity: 1;
+}
+
+.text-muted {
+    color: var(--muted) !important;
+}
+
+.text-success {
+    color: #6fd4a0 !important;
+}
+
+.text-danger {
+    color: #ff8a98 !important;
+}
+
+/* ---------- Thanh menu ---------- */
+.cinema-nav {
+    --bs-navbar-color: var(--muted);
+    --bs-navbar-hover-color: var(--cream);
+    --bs-navbar-active-color: var(--gold);
+    background: rgba(21, 18, 28, 0.94);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    backdrop-filter: blur(8px);
+    margin-bottom: 1.5rem;
+}
+
+    .cinema-nav .navbar-brand {
+        color: var(--cream);
+        font-weight: 800;
+        letter-spacing: 0.01em;
+    }
+
+        .cinema-nav .navbar-brand:hover {
+            color: var(--cream);
+        }
+
+/* Biểu tượng tấm vé có hai khuyết bên hông */
+.brand-mark {
+    display: inline-block;
+    width: 26px;
+    height: 18px;
+    margin-right: 0.55rem;
+    vertical-align: -3px;
+    border-radius: 3px;
+    background: radial-gradient(circle at 0 50%, var(--ink) 4px, transparent 4.5px), radial-gradient(circle at 100% 50%, var(--ink) 4px, transparent 4.5px), var(--velvet);
+}
+
+.cinema-nav .navbar-nav .nav-link {
+    color: var(--muted);
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.45rem 0.8rem;
+}
+
+    .cinema-nav .navbar-nav .nav-link:hover,
+    .cinema-nav .navbar-nav .nav-link:focus-visible {
+        color: var(--cream);
+        background: var(--panel);
+    }
+
+.cinema-nav .nav-user {
+    color: var(--cream);
+    font-weight: 500;
+}
+
+.role-pill {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.55rem;
+    border: 1px solid var(--gold);
+    border-radius: 999px;
+    color: var(--gold);
+    font-size: 0.75rem;
+    font-weight: 600;
+    vertical-align: 1px;
+}
+
+/* ---------- Chân trang ---------- */
+footer.footer.border-top {
+    border-top: 1px solid var(--line) !important;
+    color: var(--muted);
+    position: static;
+    line-height: 1.5;
+    white-space: normal;
+    padding: 1.25rem 0;
+}
+
+/* ---------- Nút ---------- */
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+    .btn.btn-primary {
+        background-color: var(--velvet);
+        border-color: var(--velvet);
+        color: var(--cream);
+    }
+
+        .btn.btn-primary:hover,
+        .btn.btn-primary:focus-visible,
+        .btn.btn-primary:active {
+            background-color: var(--velvet-hover);
+            border-color: var(--velvet-hover);
+            color: var(--cream);
+        }
+
+        .btn.btn-primary:disabled,
+        .btn.btn-primary.disabled {
+            background-color: var(--velvet);
+            border-color: var(--velvet);
+            color: var(--cream);
+            opacity: 0.4;
+        }
+
+    .btn.btn-outline-primary {
+        color: var(--gold);
+        border-color: var(--gold);
+        background: transparent;
+    }
+
+        .btn.btn-outline-primary:hover,
+        .btn.btn-outline-primary:focus-visible,
+        .btn.btn-outline-primary:active {
+            background-color: var(--gold);
+            border-color: var(--gold);
+            color: var(--gold-ink);
+        }
+
+    .btn.btn-link {
+        color: var(--gold);
+    }
+
+        .btn.btn-link:hover {
+            color: #ffd27a;
+        }
+
+    .btn:focus-visible {
+        box-shadow: 0 0 0 0.2rem rgba(242, 184, 75, 0.35);
+    }
+
+/* ---------- Thẻ ---------- */
+.card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--cream);
+}
+
+    .card .card-title {
+        color: var(--cream);
+    }
+
+/* ---------- Form ---------- */
+.form-label {
+    color: var(--cream);
+    font-weight: 500;
+}
+
+.form-text {
+    color: var(--muted);
+}
+
+.form-control,
+.form-select,
+.input-group-text {
+    background-color: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--cream);
+}
+
+    .form-control::placeholder {
+        color: var(--muted);
+        opacity: 1;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        background-color: var(--panel-2);
+        color: var(--cream);
+        border-color: var(--gold);
+        box-shadow: 0 0 0 0.2rem rgba(242, 184, 75, 0.2);
+    }
+
+    .form-control:disabled {
+        background-color: var(--panel);
+        color: var(--muted);
+    }
+
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23f5efe3' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+    .form-select option {
+        background: var(--panel);
+        color: var(--cream);
+    }
+
+.form-check-input {
+    background-color: var(--panel-2);
+    border-color: var(--line);
+}
+
+    .form-check-input:checked {
+        background-color: var(--velvet);
+        border-color: var(--velvet);
+    }
+
+/* ---------- Bảng ---------- */
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--cream);
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.04);
+    --bs-table-striped-color: var(--cream);
+    --bs-table-accent-bg: transparent;
+    color: var(--cream);
+    border-color: var(--line);
+}
+
+    .table > :not(caption) > * > * {
+        background-color: transparent;
+        color: var(--cream);
+        border-bottom-color: var(--line);
+        box-shadow: none;
+    }
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: rgba(255, 255, 255, 0.04);
+    color: var(--cream);
+}
+
+.table thead th {
+    color: var(--muted);
+    font-weight: 600;
+    border-bottom: 1px solid var(--line);
+}
+
+/* ---------- Thông báo ---------- */
+.alert {
+    border: 1px solid;
+    border-radius: 10px;
+}
+
+.alert-danger {
+    background: rgba(184, 40, 58, 0.16);
+    border-color: rgba(184, 40, 58, 0.55);
+    color: #ffb4bd;
+}
+
+.alert-success {
+    background: rgba(61, 170, 110, 0.14);
+    border-color: rgba(61, 170, 110, 0.5);
+    color: #9be3bd;
+}
+
+.alert-warning {
+    background: rgba(242, 184, 75, 0.12);
+    border-color: rgba(242, 184, 75, 0.45);
+    color: #f7d58e;
+}
+
+.alert-info {
+    background: rgba(90, 160, 220, 0.13);
+    border-color: rgba(90, 160, 220, 0.45);
+    color: #a9d2f5;
+}
+
+.alert-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--line);
+    color: var(--muted);
+}
+
+/* ---------- Danh sách, huy hiệu ---------- */
+.list-group-item {
+    background: var(--panel);
+    color: var(--cream);
+    border-color: var(--line);
+}
+
+.list-group-item-action:hover,
+.list-group-item-action:focus-visible {
+    background: var(--panel-2);
+    color: var(--cream);
+}
+
+.badge.bg-secondary {
+    background-color: var(--panel-2) !important;
+    color: var(--gold) !important;
+    border: 1px solid var(--line);
+}
+
+/* ---------- Sơ đồ ghế (ghi đè booking.css) ---------- */
+body .screen {
+    background: linear-gradient(to bottom, rgba(242, 184, 75, 0.38), rgba(242, 184, 75, 0));
+    color: var(--gold);
+    box-shadow: 0 18px 40px -18px rgba(242, 184, 75, 0.5);
+}
+
+body .row-label {
+    color: var(--muted);
+}
+
+body .seat {
+    border-radius: 8px 8px 4px 4px;
+    font-weight: 600;
+}
+
+    body .seat.available {
+        background: #3a3447;
+        color: var(--cream);
+        box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+    }
+
+        body .seat.available:hover {
+            background: #4a4360;
+            outline: 2px solid var(--gold);
+            filter: none;
+        }
+
+    body .seat.selected {
+        background: var(--gold);
+        color: var(--gold-ink);
+        box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    body .seat.booked {
+        background: #1c1925;
+        color: #5b5470;
+        border: 1px dashed #3a3447;
+    }
+
+    body .seat:focus-visible {
+        outline: 2px solid var(--cream);
+        outline-offset: 2px;
+    }
+
+body .seat-legend {
+    color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+}
