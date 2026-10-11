@@ -1,6 +1,7 @@
 ﻿using CinemaManagement.API.Data;
 using CinemaManagement.API.DTOs;
 using CinemaManagement.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace CinemaManagement.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]   // phải đăng nhập mới gọi được; riêng thêm/sửa/xóa chỉ Admin và Staff
     public class ShowtimeController : ControllerBase
     {
         private readonly CinemaDbContext _context;
@@ -77,7 +79,8 @@ namespace CinemaManagement.API.Controllers
             });
         }
 
-        /// <summary>POST /api/showtime</summary>
+        /// <summary>POST /api/showtime (Admin, Staff)</summary>
+        [Authorize(Roles = "Admin,Staff")]
         [HttpPost]
         public IActionResult Create([FromBody] ShowtimeCreateRequest request)
         {
@@ -119,7 +122,8 @@ namespace CinemaManagement.API.Controllers
             });
         }
 
-        /// <summary>PUT /api/showtime/{id}</summary>
+        /// <summary>PUT /api/showtime/{id} (Admin, Staff)</summary>
+        [Authorize(Roles = "Admin,Staff")]
         [HttpPut("{id}")]
         public IActionResult Update(int id, [FromBody] ShowtimeUpdateRequest request)
         {
@@ -153,7 +157,8 @@ namespace CinemaManagement.API.Controllers
             return Ok(new { message = "Cập nhật suất chiếu thành công." });
         }
 
-        /// <summary>DELETE /api/showtime/{id}</summary>
+        /// <summary>DELETE /api/showtime/{id} (Admin, Staff)</summary>
+        [Authorize(Roles = "Admin,Staff")]
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {

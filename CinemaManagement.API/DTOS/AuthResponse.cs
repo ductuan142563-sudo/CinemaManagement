@@ -16,6 +16,9 @@
         public string? TierName { get; set; }
         public int? CurrentPoints { get; set; }
 
+        // JWT trả về khi đăng nhập thành công
+        public string? Token { get; set; }
+
         public static AuthResponse Ok(
             int userId, string username, string fullName, string role,
             int? memberId = null, string? membershipCode = null,

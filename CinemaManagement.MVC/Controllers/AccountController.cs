@@ -8,11 +8,29 @@ namespace CinemaManagement.MVC.Controllers
 {
     public class AccountController : Controller
     {
+        private const string TokenKey = "Token";
+
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         private readonly ApiService _api;
 
         public AccountController(ApiService api)
         {
             _api = api;
+        }
+
+        // Khớp response của POST api/auth/login (không phân biệt hoa thường: userID/userId...)
+        private class LoginApiResponse
+        {
+            public int UserID { get; set; }
+            public string? Username { get; set; }
+            public string? FullName { get; set; }
+            public string? Role { get; set; }
+            public int? MemberID { get; set; }
+            public string? Token { get; set; }
         }
 
         // GET: /Account/Login
@@ -45,40 +63,28 @@ namespace CinemaManagement.MVC.Controllers
                 return View(model);
             }
 
+            LoginApiResponse? data = null;
             try
             {
-                using var doc = JsonDocument.Parse(content);
-                var root = doc.RootElement;
-
-                // Tùy response API của bạn – chỉnh key cho khớp
-                int userId = root.TryGetProperty("userId", out var uid) ? uid.GetInt32()
-                           : root.TryGetProperty("UserID", out var uid2) ? uid2.GetInt32() : 0;
-
-                string username = root.TryGetProperty("username", out var un) ? un.GetString() ?? model.Username
-                                : root.TryGetProperty("Username", out var un2) ? un2.GetString() ?? model.Username
-                                : model.Username;
-
-                string fullName = root.TryGetProperty("fullName", out var fn) ? fn.GetString() ?? ""
-                                : root.TryGetProperty("FullName", out var fn2) ? fn2.GetString() ?? ""
-                                : "";
-
-                string role = root.TryGetProperty("role", out var r) ? r.GetString() ?? "Member"
-                            : root.TryGetProperty("Role", out var r2) ? r2.GetString() ?? "Member"
-                            : "Member";
-
-                int? memberId = null;
-                if (root.TryGetProperty("memberId", out var mid) && mid.ValueKind != JsonValueKind.Null)
-                    memberId = mid.GetInt32();
-                else if (root.TryGetProperty("MemberID", out var mid2) && mid2.ValueKind != JsonValueKind.Null)
-                    memberId = mid2.GetInt32();
-
-                SessionHelper.SetUser(HttpContext.Session, userId, username, fullName, role, memberId);
+                data = JsonSerializer.Deserialize<LoginApiResponse>(content, JsonOptions);
             }
-            catch
+            catch (JsonException)
             {
-                // Nếu API chỉ trả message thành công, lưu tối thiểu
-                SessionHelper.SetUser(HttpContext.Session, 0, model.Username, model.Username, "Member");
+                // xử lý ở bên dưới
             }
+
+            if (data == null || string.IsNullOrWhiteSpace(data.Token))
+            {
+                ModelState.AddModelError("", "Đăng nhập thất bại: không nhận được phiên đăng nhập từ máy chủ.");
+                return View(model);
+            }
+
+            var username = string.IsNullOrWhiteSpace(data.Username) ? model.Username : data.Username;
+            var fullName = string.IsNullOrWhiteSpace(data.FullName) ? username : data.FullName;
+            var role = string.IsNullOrWhiteSpace(data.Role) ? "Member" : data.Role;
+
+            SessionHelper.SetUser(HttpContext.Session, data.UserID, username, fullName, role, data.MemberID);
+            HttpContext.Session.SetString(TokenKey, data.Token);
 
             return RedirectToAction("Index", "Home");
         }
@@ -121,6 +127,7 @@ namespace CinemaManagement.MVC.Controllers
         public IActionResult Logout()
         {
             SessionHelper.Clear(HttpContext.Session);
+            HttpContext.Session.Remove(TokenKey);
             return RedirectToAction("Login");
         }
 

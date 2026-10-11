@@ -1,0 +1,142 @@
+﻿@using System.Globalization
+@using CinemaManagement.MVC.ViewModels
+@model RevenueReportViewModel
+@{
+    ViewData["Title"] = "Báo cáo doanh thu";
+    var inv = CultureInfo.InvariantCulture;
+    var chartData = System.Text.Json.JsonSerializer.Serialize(new
+    {
+        labels = Model.Items.Select(i => i.Date.ToString("dd/MM", inv)),
+        revenue = Model.Items.Select(i => i.TotalRevenue)
+    });
+}
+
+<a asp-action="Index" class="btn btn-link px-0">&larr; Tổng quan</a>
+<h2 class="mb-3">Báo cáo doanh thu theo ngày</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form id="filterForm" method="get" asp-action="Revenue" class="row g-2 align-items-end mb-3">
+    <div class="col-auto">
+        <label for="fromDate" class="form-label">Từ ngày</label>
+        <input type="date" id="fromDate" name="fromDate" class="form-control" required
+               value="@Model.FromDate.ToString("yyyy-MM-dd", inv)" />
+    </div>
+    <div class="col-auto">
+        <label for="toDate" class="form-label">Đến ngày</label>
+        <input type="date" id="toDate" name="toDate" class="form-control" required
+               value="@Model.ToDate.ToString("yyyy-MM-dd", inv)" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Xem báo cáo</button>
+    </div>
+</form>
+<div id="filterError" class="alert alert-warning d-none"></div>
+
+@if (Model.Items.Count == 0)
+{
+    <div class="alert alert-secondary">Không có dữ liệu doanh thu trong khoảng ngày này.</div>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <div id="chartBox" style="position: relative; height: 340px;">
+                <canvas id="revenueChart" data-chart="@chartData"></canvas>
+            </div>
+            <div id="chartNote" class="text-muted small d-none">
+                Không tải được thư viện biểu đồ (cần kết nối Internet). Vui lòng xem bảng bên dưới.
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Ngày</th>
+                    <th class="text-end">Số booking</th>
+                    <th class="text-end">Số vé</th>
+                    <th class="text-end">Doanh thu</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.Date.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end">@ReportFormat.Number(item.TotalBookings)</td>
+                        <td class="text-end">@ReportFormat.Number(item.TotalTickets)</td>
+                        <td class="text-end">@ReportFormat.Money(item.TotalRevenue)</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold">
+                    <td>Tổng cộng</td>
+                    <td class="text-end">@ReportFormat.Number(Model.SumBookings)</td>
+                    <td class="text-end">@ReportFormat.Number(Model.SumTickets)</td>
+                    <td class="text-end">@ReportFormat.Money(Model.SumRevenue)</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        // Validate khoảng ngày phía client
+        document.getElementById('filterForm').addEventListener('submit', function (e) {
+            const err = document.getElementById('filterError');
+            err.classList.add('d-none');
+
+            const from = this.fromDate.value;
+            const to = this.toDate.value;
+            if (from && to && from > to) {
+                e.preventDefault();
+                err.textContent = 'Ngày bắt đầu không được lớn hơn ngày kết thúc.';
+                err.classList.remove('d-none');
+            }
+        });
+
+        // Biểu đồ doanh thu (Chart.js)
+        (function () {
+            const canvas = document.getElementById('revenueChart');
+            if (!canvas) return;
+
+            if (typeof Chart === 'undefined') {
+                document.getElementById('chartBox').classList.add('d-none');
+                document.getElementById('chartNote').classList.remove('d-none');
+                return;
+            }
+
+            const d = JSON.parse(canvas.dataset.chart);
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: d.labels,
+                    datasets: [{
+                        label: 'Doanh thu (đ)',
+                        data: d.revenue,
+                        backgroundColor: 'rgba(13, 110, 253, 0.6)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: v => Number(v).toLocaleString('vi-VN') }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+}

@@ -1,6 +1,7 @@
 ﻿using CinemaManagement.API.Data;
 using CinemaManagement.API.DTOs;
 using CinemaManagement.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,10 +13,12 @@ namespace CinemaManagement.API.Controllers
     {
         private readonly AuthService _authService;
         private readonly CinemaDbContext _context;
+        private readonly JwtTokenService _jwt;
 
-        public AuthController(CinemaDbContext context)
+        public AuthController(CinemaDbContext context, JwtTokenService jwt)
         {
             _context = context;
+            _jwt = jwt;
             _authService = new AuthService(context);
         }
 
@@ -67,6 +70,9 @@ namespace CinemaManagement.API.Controllers
                     currentPoints
                 );
 
+                // Tạo JWT chứa userId, username, role, memberId
+                response.Token = _jwt.CreateToken(user.UserID, user.Username, user.Role, memberId);
+
                 return Ok(response);
             }
             catch (Exception ex)
@@ -113,13 +119,15 @@ namespace CinemaManagement.API.Controllers
         }
 
         /// <summary>
-        /// GET /api/auth/me?userId=1  (lấy thông tin user hiện tại – đơn giản)
+        /// GET /api/auth/me  (lấy thông tin người dùng hiện tại từ token)
         /// </summary>
+        [Authorize]
         [HttpGet("me")]
-        public IActionResult GetCurrentUser([FromQuery] int userId)
+        public IActionResult GetCurrentUser()
         {
-            if (userId <= 0)
-                return BadRequest(AuthResponse.Fail("userId không hợp lệ."));
+            // userId lấy từ token, không tin giá trị client gửi lên
+            if (!int.TryParse(User.FindFirst("userId")?.Value, out var userId) || userId <= 0)
+                return Unauthorized(AuthResponse.Fail("Token không hợp lệ."));
 
             try
             {

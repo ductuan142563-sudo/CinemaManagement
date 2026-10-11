@@ -1,5 +1,6 @@
 ﻿using CinemaManagement.API.Data;
 using CinemaManagement.API.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +8,7 @@ namespace CinemaManagement.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Admin")]   // toàn bộ báo cáo chỉ dành cho Admin
     public class ReportController : ControllerBase
     {
         private readonly CinemaDbContext _context;

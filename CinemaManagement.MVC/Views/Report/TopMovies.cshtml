@@ -1,0 +1,142 @@
+﻿@using System.Globalization
+@using CinemaManagement.MVC.ViewModels
+@model TopMoviesReportViewModel
+@{
+    ViewData["Title"] = "Phim bán chạy";
+    var inv = CultureInfo.InvariantCulture;
+    var chartData = System.Text.Json.JsonSerializer.Serialize(new
+    {
+        labels = Model.Items.Select(i => i.MovieTitle),
+        tickets = Model.Items.Select(i => i.TotalTickets)
+    });
+}
+
+<a asp-action="Index" class="btn btn-link px-0">&larr; Tổng quan</a>
+<h2 class="mb-3">Phim bán chạy</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form id="filterForm" method="get" asp-action="TopMovies" class="row g-2 align-items-end mb-3">
+    <div class="col-auto">
+        <label for="fromDate" class="form-label">Từ ngày</label>
+        <input type="date" id="fromDate" name="fromDate" class="form-control" required
+               value="@Model.FromDate.ToString("yyyy-MM-dd", inv)" />
+    </div>
+    <div class="col-auto">
+        <label for="toDate" class="form-label">Đến ngày</label>
+        <input type="date" id="toDate" name="toDate" class="form-control" required
+               value="@Model.ToDate.ToString("yyyy-MM-dd", inv)" />
+    </div>
+    <div class="col-auto">
+        <label for="top" class="form-label">Số phim hiển thị</label>
+        <input type="number" id="top" name="top" class="form-control" required min="1" max="20"
+               value="@Model.Top" style="width: 120px;" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Xem báo cáo</button>
+    </div>
+</form>
+<div id="filterError" class="alert alert-warning d-none"></div>
+
+@if (Model.Items.Count == 0)
+{
+    <div class="alert alert-secondary">Không có dữ liệu bán vé trong khoảng ngày này.</div>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <div id="chartBox" style="position: relative; height: 320px;">
+                <canvas id="topChart" data-chart="@chartData"></canvas>
+            </div>
+            <div id="chartNote" class="text-muted small d-none">
+                Không tải được thư viện biểu đồ (cần kết nối Internet). Vui lòng xem bảng bên dưới.
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th style="width: 70px;">Hạng</th>
+                    <th>Phim</th>
+                    <th class="text-end">Số vé</th>
+                    <th class="text-end">Doanh thu</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < Model.Items.Count; i++)
+                {
+                    var m = Model.Items[i];
+                    <tr>
+                        <td>@(i + 1)</td>
+                        <td>@m.MovieTitle</td>
+                        <td class="text-end">@ReportFormat.Number(m.TotalTickets)</td>
+                        <td class="text-end">@ReportFormat.Money(m.TotalRevenue)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        // Validate phía client
+        document.getElementById('filterForm').addEventListener('submit', function (e) {
+            const err = document.getElementById('filterError');
+            err.classList.add('d-none');
+
+            const from = this.fromDate.value;
+            const to = this.toDate.value;
+            const top = parseInt(this.top.value, 10);
+
+            let msg = '';
+            if (from && to && from > to) msg = 'Ngày bắt đầu không được lớn hơn ngày kết thúc.';
+            else if (isNaN(top) || top < 1 || top > 20) msg = 'Số phim hiển thị phải từ 1 đến 20.';
+
+            if (msg) {
+                e.preventDefault();
+                err.textContent = msg;
+                err.classList.remove('d-none');
+            }
+        });
+
+        // Biểu đồ số vé theo phim
+        (function () {
+            const canvas = document.getElementById('topChart');
+            if (!canvas) return;
+
+            if (typeof Chart === 'undefined') {
+                document.getElementById('chartBox').classList.add('d-none');
+                document.getElementById('chartNote').classList.remove('d-none');
+                return;
+            }
+
+            const d = JSON.parse(canvas.dataset.chart);
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: d.labels,
+                    datasets: [{
+                        label: 'Số vé',
+                        data: d.tickets,
+                        backgroundColor: 'rgba(25, 135, 84, 0.6)'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+        })();
+    </script>
+}

@@ -2,6 +2,7 @@
 using CinemaManagement.API.DTOs;
 using CinemaManagement.API.Models;
 using CinemaManagement.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ namespace CinemaManagement.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class BookingController : ControllerBase
     {
         private readonly BookingService _bookingService;
@@ -93,6 +95,14 @@ namespace CinemaManagement.API.Controllers
                 });
             }
 
+            // Member chỉ được đặt cho chính mình: luôn lấy MemberId từ token
+            if (User.IsInRole("Member"))
+            {
+                request.MemberId = int.TryParse(User.FindFirst("memberId")?.Value, out var tokenMemberId)
+                    ? tokenMemberId
+                    : (int?)null;
+            }
+
             var result = _bookingService.CreateBooking(
                 request.ShowtimeId,
                 request.SeatIds,
@@ -116,9 +126,10 @@ namespace CinemaManagement.API.Controllers
         }
 
         /// <summary>
-        /// Tạo ghế cho tất cả Hall chưa có ghế
+        /// Tạo ghế cho tất cả Hall chưa có ghế (chỉ Admin)
         /// GET: api/booking/api/seed/seats
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpGet("api/seed/seats")]
         public async Task<IActionResult> SeedSeats()
         {
@@ -166,9 +177,10 @@ namespace CinemaManagement.API.Controllers
         }
 
         /// <summary>
-        /// Hủy vé theo mã booking
+        /// Hủy vé theo mã booking (Admin, Staff)
         /// PUT: api/booking/cancel/{bookingCode}
         /// </summary>
+        [Authorize(Roles = "Admin,Staff")]
         [HttpPut("cancel/{bookingCode}")]
         public ActionResult<BookingResponse> CancelBooking(string bookingCode)
         {

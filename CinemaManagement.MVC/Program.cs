@@ -3,6 +3,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services
 builder.Services.AddControllersWithViews();
 
+// Cho phép ApiService đọc Session (lấy token)
+builder.Services.AddHttpContextAccessor();
+
 // Đăng ký HttpClient gọi API
 builder.Services.AddHttpClient("CinemaAPI", client =>
 {
@@ -33,7 +36,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseSession();          // ← quan trọng
+app.UseSession();          
 app.UseAuthorization();
 
 app.MapControllerRoute(

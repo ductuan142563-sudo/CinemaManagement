@@ -1,6 +1,7 @@
 ﻿using CinemaManagement.API.Data;
 using CinemaManagement.API.DTOs;
 using CinemaManagement.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace CinemaManagement.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]   // phải đăng nhập mới gọi được; riêng thêm/sửa/xóa chỉ Admin
     public class MovieController : ControllerBase
     {
         private readonly CinemaDbContext _context;
@@ -77,7 +79,8 @@ namespace CinemaManagement.API.Controllers
             });
         }
 
-        /// <summary>POST /api/movie</summary>
+        /// <summary>POST /api/movie (chỉ Admin)</summary>
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public IActionResult Create([FromBody] MovieCreateRequest request)
         {
@@ -108,7 +111,8 @@ namespace CinemaManagement.API.Controllers
             });
         }
 
-        /// <summary>PUT /api/movie/5</summary>
+        /// <summary>PUT /api/movie/5 (chỉ Admin)</summary>
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public IActionResult Update(int id, [FromBody] MovieUpdateRequest request)
         {
@@ -135,7 +139,8 @@ namespace CinemaManagement.API.Controllers
             return Ok(new { message = "Cập nhật phim thành công." });
         }
 
-        /// <summary>DELETE /api/movie/5</summary>
+        /// <summary>DELETE /api/movie/5 (chỉ Admin)</summary>
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {

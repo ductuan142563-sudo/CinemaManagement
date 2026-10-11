@@ -1,11 +1,11 @@
-﻿using CinemaManagement.MVC.Helpers;   // chỉnh namespace nếu [AuthorizeSession] của PART 2 nằm chỗ khác
+﻿using CinemaManagement.MVC.Helpers;
 using CinemaManagement.MVC.Services;
 using CinemaManagement.MVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaManagement.MVC.Controllers;
 
-[AuthorizeSession]
+[AuthorizeSession(Roles = new[] { "Admin", "Member" })]
 public class MemberController : Controller
 {
     private readonly ApiService _api;
@@ -21,7 +21,7 @@ public class MemberController : Controller
     {
         var memberId = ResolveMemberId(id);
 
-        // Admin/Staff mở menu "Thành viên" mà chưa nhập mã -> hiện form tra cứu
+        // Admin mở menu "Thành viên" mà chưa nhập mã -> hiện form tra cứu
         if (memberId == null)
             return View(new MemberPageViewModel());
 
@@ -121,7 +121,7 @@ public class MemberController : Controller
     // ---------- Hàm phụ ----------
 
     // Member: chỉ được xem hồ sơ của chính mình (lấy từ Session).
-    // Admin/Staff: dùng id truyền vào (có thể null).
+    // Admin: dùng id truyền vào (có thể null).
     private int? ResolveMemberId(int? requestedId)
     {
         var role = HttpContext.Session.GetString("Role");
@@ -129,7 +129,7 @@ public class MemberController : Controller
         if (role == "Member")
             return HttpContext.Session.GetMemberIdOrNull();
 
-        if (role == "Admin" || role == "Staff")
+        if (role == "Admin")
             return requestedId;
 
         return null;
