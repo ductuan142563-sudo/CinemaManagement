@@ -1,15 +1,28 @@
-﻿@model CinemaManagement.MVC.ViewModels.MovieViewModel
+﻿@using CinemaManagement.MVC.Helpers
+@inject IConfiguration Config
+@model CinemaManagement.MVC.ViewModels.MovieViewModel
 @{
     ViewData["Title"] = "Sửa phim";
     var genres = ViewBag.Genres as List<CinemaManagement.MVC.ViewModels.GenreItem> ?? new();
+    var posterSrc = PosterHelper.Resolve(Config, Model.PosterUrl);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/poster.css" asp-append-version="true" />
 }
 
 <h2 class="mb-4">Sửa phim</h2>
 
-<form asp-action="Edit" method="post">
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
     <input type="hidden" asp-for="MovieID" />
+    <input type="hidden" asp-for="PosterUrl" />
 
     <div class="mb-3">
         <label asp-for="Title" class="form-label">Tên phim *</label>
@@ -56,8 +69,26 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="PosterUrl" class="form-label">URL Poster</label>
-        <input asp-for="PosterUrl" class="form-control" />
+        <label for="posterFile" class="form-label">Ảnh poster</label>
+        <div class="poster-upload">
+            <div class="poster-preview" id="posterPreview">
+                @if (posterSrc != null)
+                {
+                    <img src="@posterSrc" alt="Poster hiện tại của @Model.Title" />
+                }
+                else
+                {
+                    <span class="poster-preview__empty">Chưa có ảnh</span>
+                }
+            </div>
+            <div class="poster-upload__field">
+                <input type="file" id="posterFile" name="posterFile" class="form-control"
+                       accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+                <div class="form-text">Chọn ảnh mới để thay poster hiện tại. Để trống nếu muốn giữ nguyên. JPG, PNG hoặc WebP, tối đa 3 MB.</div>
+                <div id="posterError" class="text-danger small"></div>
+                @Html.ValidationMessage("posterFile", new { @class = "text-danger" })
+            </div>
+        </div>
     </div>
 
     <div class="mb-3">
@@ -76,4 +107,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/poster-upload.js" asp-append-version="true"></script>
 }

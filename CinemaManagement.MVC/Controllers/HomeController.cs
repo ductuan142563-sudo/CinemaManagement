@@ -56,6 +56,7 @@ namespace CinemaManagement.MVC.Controllers
                         Duration = m.Duration,
                         GenreName = m.GenreName,
                         AgeRating = m.AgeRating,
+                        PosterUrl = m.PosterUrl,
                         Showtimes = upcoming.Where(s => s.MovieID == m.MovieID).ToList()
                     })
                     .Where(c => c.Showtimes.Count > 0)

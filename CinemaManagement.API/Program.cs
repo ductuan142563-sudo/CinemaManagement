@@ -4,6 +4,7 @@ using CinemaManagement.API.Middleware;
 using CinemaManagement.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<CinemaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<MembershipService>();
 builder.Services.AddScoped<AuthService>();
@@ -27,7 +29,7 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.MapInboundClaims = false;   // giữ nguyên tên claim: userId, username, role, memberId
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -45,19 +47,34 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+// Thư mục chứa ảnh poster
+var postersPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "posters");
+Directory.CreateDirectory(postersPath);
+
 var app = builder.Build();
 
-// Bắt lỗi từ mọi thứ phía sau (đặt đầu pipeline)
 app.UseMiddleware<ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        // Tự gắn token từ localStorage (khóa "jwt") vào mọi request
+        options.UseRequestInterceptor(
+            "(req) => { const t = localStorage.getItem('jwt'); if (t) { req.headers['Authorization'] = 'Bearer ' + t; } return req; }");
+    });
 }
 
 app.UseHttpsRedirection();
-app.UseAuthentication();   // phải đứng trước UseAuthorization
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(postersPath),
+    RequestPath = "/posters"
+});
+
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

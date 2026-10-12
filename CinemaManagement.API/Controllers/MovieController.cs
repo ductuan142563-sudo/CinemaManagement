@@ -9,15 +9,23 @@ namespace CinemaManagement.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]   // phải đăng nhập mới gọi được; riêng thêm/sửa/xóa chỉ Admin
+    [Authorize]   // phải đăng nhập mới gọi được; riêng thêm/sửa/xóa/tải ảnh chỉ Admin
     public class MovieController : ControllerBase
     {
-        private readonly CinemaDbContext _context;
+        private const long MaxPosterBytes = 3 * 1024 * 1024;   // 3 MB
+        private static readonly string[] AllowedPosterExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
 
-        public MovieController(CinemaDbContext context)
+        private readonly CinemaDbContext _context;
+        private readonly IWebHostEnvironment _env;
+
+        public MovieController(CinemaDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
+
+        // Thư mục lưu poster (phải trùng với thư mục khai báo trong Program.cs)
+        private string PosterFolder => Path.Combine(_env.ContentRootPath, "wwwroot", "posters");
 
         /// <summary>GET /api/movie</summary>
         [HttpGet]
@@ -47,6 +55,8 @@ namespace CinemaManagement.API.Controllers
                     GenreName = m.Genre != null ? m.Genre.GenreName : null,
                     AgeRating = m.AgeRating,
                     Description = m.Description,
+                    ReleaseDate = m.ReleaseDate,
+                    PosterUrl = m.PosterUrl,
                     IsActive = m.IsActive
                 })
                 .ToList();
@@ -75,6 +85,8 @@ namespace CinemaManagement.API.Controllers
                 GenreName = movie.Genre?.GenreName,
                 AgeRating = movie.AgeRating,
                 Description = movie.Description,
+                ReleaseDate = movie.ReleaseDate,
+                PosterUrl = movie.PosterUrl,
                 IsActive = movie.IsActive
             });
         }
@@ -98,6 +110,7 @@ namespace CinemaManagement.API.Controllers
                 GenreID = request.GenreID,
                 AgeRating = request.AgeRating?.Trim(),
                 Description = request.Description?.Trim(),
+                ReleaseDate = request.ReleaseDate,
                 IsActive = true
             };
 
@@ -132,11 +145,61 @@ namespace CinemaManagement.API.Controllers
             movie.GenreID = request.GenreID;
             movie.AgeRating = request.AgeRating?.Trim();
             movie.Description = request.Description?.Trim();
+            movie.ReleaseDate = request.ReleaseDate;
             movie.IsActive = request.IsActive;
 
             _context.SaveChanges();
 
             return Ok(new { message = "Cập nhật phim thành công." });
+        }
+
+        /// <summary>
+        /// Tải ảnh poster cho phim (chỉ Admin)
+        /// POST /api/movie/5/poster  (multipart/form-data, field tên "file")
+        /// </summary>
+        [Authorize(Roles = "Admin")]
+        [HttpPost("{id}/poster")]
+        [RequestSizeLimit(4 * 1024 * 1024)]
+        public async Task<IActionResult> UploadPoster(int id, IFormFile? file)
+        {
+            var movie = await _context.Movies.FindAsync(id);
+            if (movie == null)
+                return NotFound(new { message = "Không tìm thấy phim." });
+
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "Vui lòng chọn ảnh poster." });
+
+            if (file.Length > MaxPosterBytes)
+                return BadRequest(new { message = "Ảnh poster tối đa 3 MB." });
+
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!AllowedPosterExtensions.Contains(ext))
+                return BadRequest(new { message = "Chỉ chấp nhận ảnh .jpg, .jpeg, .png hoặc .webp." });
+
+            if (!await HasValidImageSignatureAsync(file, ext))
+                return BadRequest(new { message = "Tệp tải lên không phải ảnh hợp lệ." });
+
+            Directory.CreateDirectory(PosterFolder);
+
+            // Tên file ngẫu nhiên: không dùng tên file người dùng gửi lên
+            var fileName = $"{Guid.NewGuid():N}{ext}";
+            var fullPath = Path.Combine(PosterFolder, fileName);
+
+            await using (var stream = System.IO.File.Create(fullPath))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            DeleteOldPoster(movie.PosterUrl);
+
+            movie.PosterUrl = $"/posters/{fileName}";
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Tải ảnh poster thành công.",
+                posterUrl = movie.PosterUrl
+            });
         }
 
         /// <summary>DELETE /api/movie/5 (chỉ Admin)</summary>
@@ -157,6 +220,38 @@ namespace CinemaManagement.API.Controllers
             // _context.SaveChanges();
 
             return Ok(new { message = "Xóa phim thành công." });
+        }
+
+        // ---------- Hàm phụ ----------
+
+        // Kiểm tra vài byte đầu của tệp để chắc chắn đúng là JPG/PNG/WebP (không tin đuôi tên file)
+        private static async Task<bool> HasValidImageSignatureAsync(IFormFile file, string ext)
+        {
+            var header = new byte[12];
+            await using var stream = file.OpenReadStream();
+            var read = await stream.ReadAsync(header, 0, header.Length);
+            if (read < header.Length)
+                return false;
+
+            return ext switch
+            {
+                ".jpg" or ".jpeg" => header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF,
+                ".png" => header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47,
+                ".webp" => header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46
+                        && header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50,
+                _ => false
+            };
+        }
+
+        // Xóa file poster cũ khi thay ảnh mới (chỉ xóa file nằm trong thư mục posters)
+        private void DeleteOldPoster(string? posterUrl)
+        {
+            if (string.IsNullOrWhiteSpace(posterUrl) || !posterUrl.StartsWith("/posters/"))
+                return;
+
+            var oldPath = Path.Combine(PosterFolder, Path.GetFileName(posterUrl));
+            if (System.IO.File.Exists(oldPath))
+                System.IO.File.Delete(oldPath);
         }
     }
 }

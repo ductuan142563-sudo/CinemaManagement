@@ -10,6 +10,8 @@
         public string? GenreName { get; set; }
         public string? AgeRating { get; set; }
         public string? Description { get; set; }
+        public DateTime? ReleaseDate { get; set; }
+        public string? PosterUrl { get; set; }     // dạng /posters/xxxx.jpg
         public bool IsActive { get; set; } = true;
     }
 
@@ -21,6 +23,7 @@
         public int? GenreID { get; set; }
         public string? AgeRating { get; set; }
         public string? Description { get; set; }
+        public DateTime? ReleaseDate { get; set; }
     }
 
     public class MovieUpdateRequest
@@ -31,6 +34,7 @@
         public int? GenreID { get; set; }
         public string? AgeRating { get; set; }
         public string? Description { get; set; }
+        public DateTime? ReleaseDate { get; set; }
         public bool IsActive { get; set; } = true;
     }
 }

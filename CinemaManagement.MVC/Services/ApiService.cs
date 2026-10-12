@@ -144,6 +144,34 @@ namespace CinemaManagement.MVC.Services
             return (true, responseBody);
         }
 
+        /// <summary>Gửi 1 tệp (multipart/form-data) lên API, ví dụ ảnh poster.</summary>
+        public async Task<(bool Success, string Message)> PostFileAsync(string url, string fieldName, IFormFile file)
+        {
+            var client = CreateClient();
+
+            using var content = new MultipartFormDataContent();
+            await using var stream = file.OpenReadStream();
+            var fileContent = new StreamContent(stream);
+
+            fileContent.Headers.ContentType =
+                MediaTypeHeaderValue.TryParse(file.ContentType, out var contentType)
+                    ? contentType
+                    : new MediaTypeHeaderValue("application/octet-stream");
+
+            content.Add(fileContent, fieldName, file.FileName);
+
+            var response = await client.PostAsync(url, content);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                HandleUnauthorized(response);
+                return (false, ExtractMessage(response, responseBody));
+            }
+
+            return (true, responseBody);
+        }
+
         public async Task<(bool Success, string Message)> PutAsync(string url, object? data = null)
         {
             var client = CreateClient();

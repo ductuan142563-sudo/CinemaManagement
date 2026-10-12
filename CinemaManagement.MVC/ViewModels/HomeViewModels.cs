@@ -9,6 +9,7 @@ public class HomeMovieDto
     public string? GenreName { get; set; }
     public string? AgeRating { get; set; }
     public string? Description { get; set; }
+    public string? PosterUrl { get; set; }
     public bool IsActive { get; set; }
 }
 
@@ -31,6 +32,7 @@ public class HomeMovieCard
     public int Duration { get; set; }
     public string? GenreName { get; set; }
     public string? AgeRating { get; set; }
+    public string? PosterUrl { get; set; }
     public List<HomeShowtimeDto> Showtimes { get; set; } = new();
 
     // Màu poster cố định theo tên phim (không dùng string.GetHashCode vì nó đổi mỗi lần chạy lại)

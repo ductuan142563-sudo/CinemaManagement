@@ -1,6 +1,7 @@
 ﻿@using System.Globalization
 @using CinemaManagement.MVC.Helpers
 @using CinemaManagement.MVC.ViewModels
+@inject IConfiguration Config
 @model HomePageViewModel
 @{
     ViewData["Title"] = "Trang chủ";
@@ -43,6 +44,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/poster.css" asp-append-version="true" />
 }
 
 @if (!Model.IsLoggedIn)
@@ -70,21 +72,29 @@ else
     {
         var m = Model.NextMovie;
         var st = Model.NextShowtime;
+        var heroPoster = PosterHelper.Resolve(Config, m.PosterUrl);
 
         <section class="next-ticket" style="--hue:@m.PosterHue" aria-label="Suất chiếu tiếp theo">
-            <div class="next-ticket__main">
-                <p class="next-ticket__label">Suất chiếu tiếp theo</p>
-                <h1 class="next-ticket__title">@m.Title</h1>
-                <div class="meta">
-                    @if (!string.IsNullOrWhiteSpace(m.GenreName))
-                    {
-                        <span>@m.GenreName</span>
-                    }
-                    <span>@m.Duration phút</span>
-                    @if (!string.IsNullOrWhiteSpace(m.AgeRating))
-                    {
-                        <span>Phân loại @m.AgeRating</span>
-                    }
+            <div class="next-ticket__main @(heroPoster != null ? "has-poster" : "")">
+                @if (heroPoster != null)
+                {
+                    <img class="next-ticket__poster" src="@heroPoster" alt="Poster phim @m.Title"
+                         onerror="this.parentElement.classList.remove('has-poster'); this.remove();" />
+                }
+                <div class="next-ticket__text">
+                    <p class="next-ticket__label">Suất chiếu tiếp theo</p>
+                    <h1 class="next-ticket__title">@m.Title</h1>
+                    <div class="meta">
+                        @if (!string.IsNullOrWhiteSpace(m.GenreName))
+                        {
+                            <span>@m.GenreName</span>
+                        }
+                        <span>@m.Duration phút</span>
+                        @if (!string.IsNullOrWhiteSpace(m.AgeRating))
+                        {
+                            <span>Phân loại @m.AgeRating</span>
+                        }
+                    </div>
                 </div>
             </div>
             <div class="next-ticket__stub">
@@ -118,14 +128,23 @@ else
         <div class="movie-grid">
             @foreach (var card in Model.Cards)
             {
+                var cardPoster = PosterHelper.Resolve(Config, card.PosterUrl);
+
                 <article class="movie-card">
-                    <div class="poster" style="--hue:@card.PosterHue">
+                    <div class="poster @(cardPoster != null ? "poster--img" : "")" style="--hue:@card.PosterHue">
+                        @if (cardPoster != null)
+                        {
+                            <img class="poster__img" src="@cardPoster" alt="Poster phim @card.Title" loading="lazy"
+                                 onerror="this.parentElement.classList.remove('poster--img'); this.remove();" />
+                        }
                         @if (!string.IsNullOrWhiteSpace(card.AgeRating))
                         {
                             <span class="poster__age">@card.AgeRating</span>
                         }
-                        <h3 class="poster__title">@card.Title</h3>
+                        <div class="poster__title" aria-hidden="true">@card.Title</div>
                     </div>
+
+                    <h3 class="movie-card__title">@card.Title</h3>
 
                     <div class="movie-card__meta">
                         @if (!string.IsNullOrWhiteSpace(card.GenreName))

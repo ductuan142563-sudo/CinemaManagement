@@ -1,6 +1,12 @@
-﻿@model List<CinemaManagement.MVC.ViewModels.MovieViewModel>
+﻿@using CinemaManagement.MVC.Helpers
+@inject IConfiguration Config
+@model List<CinemaManagement.MVC.ViewModels.MovieViewModel>
 @{
     ViewData["Title"] = "Quản lý phim";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/poster.css" asp-append-version="true" />
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -17,10 +23,11 @@
     <div class="alert alert-danger">@TempData["Error"]</div>
 }
 
-<table class="table table-bordered table-hover">
+<table class="table table-bordered table-hover align-middle">
     <thead class="table-dark">
         <tr>
             <th>ID</th>
+            <th style="width:70px">Poster</th>
             <th>Tên phim</th>
             <th>Đạo diễn</th>
             <th>Thời lượng</th>
@@ -32,8 +39,19 @@
     <tbody>
         @foreach (var m in Model)
         {
+            var posterSrc = PosterHelper.Resolve(Config, m.PosterUrl);
             <tr>
                 <td>@m.MovieID</td>
+                <td>
+                    @if (posterSrc != null)
+                    {
+                        <img class="poster-thumb" src="@posterSrc" alt="Poster @m.Title" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="poster-thumb poster-thumb--empty" aria-label="Chưa có poster"></span>
+                    }
+                </td>
                 <td>@m.Title</td>
                 <td>@m.Director</td>
                 <td>@m.Duration phút</td>
