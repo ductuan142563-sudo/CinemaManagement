@@ -21,4 +21,16 @@ public static class PosterHelper
 
         return baseUrl + (posterUrl.StartsWith('/') ? posterUrl : "/" + posterUrl);
     }
+
+    /// <summary>
+    /// Màu cố định (0-359) theo tên phim, dùng cho poster chưa có ảnh.
+    /// Không dùng string.GetHashCode vì giá trị đó đổi mỗi lần chạy lại ứng dụng.
+    /// </summary>
+    public static int Hue(string? title)
+    {
+        var h = 17;
+        foreach (var c in title ?? string.Empty)
+            h = unchecked(h * 31 + c);
+        return Math.Abs(h % 360);
+    }
 }

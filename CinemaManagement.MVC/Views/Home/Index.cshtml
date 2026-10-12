@@ -45,6 +45,7 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/poster.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/movie-page.css" asp-append-version="true" />
 }
 
 @if (!Model.IsLoggedIn)
@@ -110,7 +111,7 @@ else
 
     <div class="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-3">
         <h2 class="section-title mb-0">Suất chiếu sắp tới</h2>
-        <a asp-controller="Booking" asp-action="Index">Đặt vé theo phim</a>
+        <a asp-controller="Booking" asp-action="Index">Xem tất cả phim</a>
     </div>
 
     @if (Model.Cards.Count == 0 && !Model.LoadFailed)
@@ -131,20 +132,22 @@ else
                 var cardPoster = PosterHelper.Resolve(Config, card.PosterUrl);
 
                 <article class="movie-card">
-                    <div class="poster @(cardPoster != null ? "poster--img" : "")" style="--hue:@card.PosterHue">
-                        @if (cardPoster != null)
-                        {
-                            <img class="poster__img" src="@cardPoster" alt="Poster phim @card.Title" loading="lazy"
-                                 onerror="this.parentElement.classList.remove('poster--img'); this.remove();" />
-                        }
-                        @if (!string.IsNullOrWhiteSpace(card.AgeRating))
-                        {
-                            <span class="poster__age">@card.AgeRating</span>
-                        }
-                        <div class="poster__title" aria-hidden="true">@card.Title</div>
-                    </div>
-
-                    <h3 class="movie-card__title">@card.Title</h3>
+                    <a class="movie-card__link" asp-controller="Booking" asp-action="Movie" asp-route-id="@card.MovieId"
+                       aria-label="Xem suất chiếu phim @card.Title">
+                        <div class="poster @(cardPoster != null ? "poster--img" : "")" style="--hue:@card.PosterHue">
+                            @if (cardPoster != null)
+                            {
+                                <img class="poster__img" src="@cardPoster" alt="Poster phim @card.Title" loading="lazy"
+                                     onerror="this.parentElement.classList.remove('poster--img'); this.remove();" />
+                            }
+                            @if (!string.IsNullOrWhiteSpace(card.AgeRating))
+                            {
+                                <span class="poster__age">@card.AgeRating</span>
+                            }
+                            <div class="poster__title" aria-hidden="true">@card.Title</div>
+                        </div>
+                        <h3 class="movie-card__title">@card.Title</h3>
+                    </a>
 
                     <div class="movie-card__meta">
                         @if (!string.IsNullOrWhiteSpace(card.GenreName))

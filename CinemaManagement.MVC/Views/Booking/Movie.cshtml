@@ -1,0 +1,124 @@
+﻿@using System.Globalization
+@using CinemaManagement.MVC.Helpers
+@using CinemaManagement.MVC.ViewModels
+@inject IConfiguration Config
+@model BookingMoviePageViewModel
+@{
+    var m = Model.Movie;
+    ViewData["Title"] = m.Title;
+    var src = PosterHelper.Resolve(Config, m.PosterUrl);
+    var role = SessionHelper.GetRole(Context.Session);
+}
+
+@functions {
+    static string DayTitle(DateTime d)
+    {
+        var today = DateTime.Today;
+        if (d.Date == today) return $"Hôm nay, {d:dd/MM}";
+        if (d.Date == today.AddDays(1)) return $"Ngày mai, {d:dd/MM}";
+
+        var dow = d.DayOfWeek switch
+        {
+            DayOfWeek.Monday => "Thứ hai",
+            DayOfWeek.Tuesday => "Thứ ba",
+            DayOfWeek.Wednesday => "Thứ tư",
+            DayOfWeek.Thursday => "Thứ năm",
+            DayOfWeek.Friday => "Thứ sáu",
+            DayOfWeek.Saturday => "Thứ bảy",
+            _ => "Chủ nhật"
+        };
+        return $"{dow}, {d:dd/MM}";
+    }
+
+    static string Money(decimal value) =>
+        value.ToString("N0", new CultureInfo("vi-VN")) + "đ";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/poster.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/movie-page.css" asp-append-version="true" />
+}
+
+<a asp-action="Index" class="btn btn-link px-0">&larr; Tất cả phim</a>
+
+<section class="movie-hero">
+    <div class="movie-hero__poster">
+        <div class="poster @(src != null ? "poster--img" : "")" style="--hue:@Model.PosterHue">
+            @if (src != null)
+            {
+                <img class="poster__img" src="@src" alt="Poster phim @m.Title"
+                     onerror="this.parentElement.classList.remove('poster--img'); this.remove();" />
+            }
+            <div class="poster__title" aria-hidden="true">@m.Title</div>
+        </div>
+    </div>
+
+    <div class="movie-hero__info">
+        <h1 class="movie-hero__title">@m.Title</h1>
+
+        <div class="movie-hero__meta">
+            @if (!string.IsNullOrWhiteSpace(m.AgeRating))
+            {
+                <span class="age-pill">@m.AgeRating</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(m.GenreName))
+            {
+                <span>@m.GenreName</span>
+            }
+            <span>@m.Duration phút</span>
+            @if (m.ReleaseDate.HasValue)
+            {
+                <span>Khởi chiếu @m.ReleaseDate.Value.ToString("dd/MM/yyyy")</span>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(m.Director))
+        {
+            <p class="text-muted mb-2">Đạo diễn: @m.Director</p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(m.Description))
+        {
+            <p class="movie-hero__desc">@m.Description</p>
+        }
+    </div>
+</section>
+
+<h2 class="section-title mb-3">Suất chiếu</h2>
+
+@if (Model.Showtimes.Count == 0)
+{
+    <div class="empty-state">
+        <p class="mb-3">Phim này chưa có suất chiếu sắp tới.</p>
+        @if (role == "Admin" || role == "Staff")
+        {
+            <a asp-controller="Showtime" asp-action="Create" class="btn btn-primary">Thêm suất chiếu</a>
+        }
+        else
+        {
+            <a asp-action="Index" class="btn btn-outline-primary">Xem phim khác</a>
+        }
+    </div>
+}
+else
+{
+    @foreach (var day in Model.Showtimes.GroupBy(s => s.StartTime.Date).OrderBy(g => g.Key))
+    {
+        <section class="day-group">
+            <h3 class="day-group__title">@DayTitle(day.Key)</h3>
+            <div class="showtime-list">
+                @foreach (var s in day)
+                {
+                    <a class="showtime-card" asp-controller="Booking" asp-action="SeatMap"
+                       asp-route-showtimeId="@s.ShowtimeID"
+                       aria-label="Đặt vé suất @s.StartTime.ToString("HH:mm") ngày @s.StartTime.ToString("dd/MM"), @s.HallName, @Money(s.BasePrice)">
+                        <span class="showtime-card__time">@s.StartTime.ToString("HH:mm")</span>
+                        <span class="showtime-card__hall">@s.HallName</span>
+                        <span class="showtime-card__price">@Money(s.BasePrice)</span>
+                    </a>
+                }
+            </div>
+        </section>
+    }
+}

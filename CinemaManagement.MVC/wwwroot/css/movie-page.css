@@ -1,0 +1,161 @@
+﻿/* ============ Thẻ phim bấm được (trang chủ, trang Đặt vé) ============ */
+.movie-card__link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    color: var(--cream);
+    text-decoration: none;
+}
+
+    .movie-card__link:hover,
+    .movie-card__link:focus-visible {
+        color: var(--cream);
+    }
+
+        .movie-card__link:hover .movie-card__title,
+        .movie-card__link:focus-visible .movie-card__title {
+            text-decoration: underline;
+            text-decoration-color: var(--gold);
+            text-underline-offset: 3px;
+        }
+
+        .movie-card__link:hover .poster,
+        .movie-card__link:focus-visible .poster {
+            border-color: var(--gold);
+        }
+
+    .movie-card__link:focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 4px;
+        border-radius: 12px;
+    }
+
+/* Phim chưa có suất chiếu sắp tới */
+.movie-card--off .poster {
+    filter: grayscale(0.85) brightness(0.7);
+}
+
+.movie-card__hint {
+    color: var(--gold);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.movie-card__hint--off {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+/* ============ Trang riêng của một phim ============ */
+.movie-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.movie-hero__poster {
+    width: 240px;
+    flex: 0 0 auto;
+}
+
+.movie-hero__info {
+    flex: 1 1 320px;
+    min-width: 0;
+}
+
+.movie-hero__title {
+    margin: 0 0 0.75rem;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.movie-hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--muted);
+}
+
+.age-pill {
+    padding: 0.1rem 0.5rem;
+    border-radius: 6px;
+    background: var(--gold);
+    color: var(--gold-ink);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.movie-hero__desc {
+    max-width: 60ch;
+    line-height: 1.65;
+    white-space: pre-line;
+}
+
+@media (max-width: 575.98px) {
+    .movie-hero {
+        gap: 1.25rem;
+    }
+
+    .movie-hero__poster {
+        width: 160px;
+    }
+}
+
+/* ============ Suất chiếu theo ngày ============ */
+.day-group {
+    margin-bottom: 1.5rem;
+}
+
+.day-group__title {
+    margin-bottom: 0.75rem;
+    font-size: 1.05rem;
+}
+
+.showtime-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.showtime-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    min-width: 116px;
+    padding: 0.7rem 1rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--cream);
+    text-decoration: none;
+}
+
+    .showtime-card:hover,
+    .showtime-card:focus-visible {
+        background: var(--panel-2);
+        border-color: var(--gold);
+        color: var(--cream);
+    }
+
+.showtime-card__time {
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--gold);
+}
+
+.showtime-card__hall {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.showtime-card__price {
+    font-size: 0.9rem;
+    font-weight: 600;
+}

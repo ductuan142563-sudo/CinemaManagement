@@ -1,4 +1,4 @@
-﻿using CinemaManagement.MVC.Helpers;   // chỉnh namespace nếu [AuthorizeSession] của PART 2 nằm chỗ khác
+﻿using CinemaManagement.MVC.Helpers;
 using CinemaManagement.MVC.Services;
 using CinemaManagement.MVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -17,40 +17,90 @@ public class BookingController : Controller
         _config = config;
     }
 
-    // ---------- Bước 1: chọn phim -> load suất chiếu ----------
+    // ---------- Bước 1: lưới poster các phim đang chiếu ----------
     public async Task<IActionResult> Index()
     {
+        var vm = new BookingIndexViewModel();
+
         try
         {
-            var movies = await _api.GetAsync<List<MovieOptionViewModel>>("api/movie") ?? new();
-            return View(movies);
+            var movies = await _api.GetAsync<List<BookingMovieDto>>("api/movie");
+            var showtimes = await _api.GetAsync<List<BookingShowtimeDto>>("api/showtime");
+
+            // Token hết hạn: ApiService đã xóa Session -> đưa về trang đăng nhập
+            if (!SessionHelper.IsLoggedIn(HttpContext.Session))
+                return RedirectToAction("Login", "Account");
+
+            if (movies == null)
+            {
+                TempData["Error"] = "Không tải được danh sách phim. Vui lòng thử lại.";
+                return View(vm);
+            }
+
+            var now = DateTime.Now;
+            var movieIdsWithShowtimes = (showtimes ?? new List<BookingShowtimeDto>())
+                .Where(s => s.IsActive && s.StartTime > now)
+                .Select(s => s.MovieID)
+                .ToHashSet();
+
+            vm.Items = movies
+                .Where(m => m.IsActive)
+                .Select(m => new BookingMovieCard
+                {
+                    Movie = m,
+                    HasShowtimes = movieIdsWithShowtimes.Contains(m.MovieID)
+                })
+                .OrderByDescending(c => c.HasShowtimes)
+                .ThenBy(c => c.Movie.Title)
+                .ToList();
         }
         catch (Exception)
         {
             TempData["Error"] = "Không tải được danh sách phim. Vui lòng thử lại.";
-            return View(new List<MovieOptionViewModel>());
         }
+
+        return View(vm);
     }
 
-    // AJAX: suất chiếu sắp tới của 1 phim
+    // ---------- Bước 2: trang riêng của một phim, chọn suất chiếu ----------
     [HttpGet]
-    public async Task<IActionResult> Showtimes(int movieId)
+    public async Task<IActionResult> Movie(int id)
     {
         try
         {
-            var all = await _api.GetAsync<List<ShowtimeOptionViewModel>>("api/showtime") ?? new();
-            var list = all.Where(s => s.MovieId == movieId && s.StartTime > DateTime.Now)
-                          .OrderBy(s => s.StartTime)
-                          .ToList();
-            return Json(new { success = true, data = list });
+            var movie = await _api.GetAsync<BookingMovieDto>($"api/movie/{id}");
+            var showtimes = await _api.GetAsync<List<BookingShowtimeDto>>($"api/showtime?movieId={id}");
+
+            if (!SessionHelper.IsLoggedIn(HttpContext.Session))
+                return RedirectToAction("Login", "Account");
+
+            if (movie == null || !movie.IsActive)
+            {
+                TempData["Error"] = "Không tìm thấy phim.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var now = DateTime.Now;
+
+            var vm = new BookingMoviePageViewModel
+            {
+                Movie = movie,
+                Showtimes = (showtimes ?? new List<BookingShowtimeDto>())
+                    .Where(s => s.MovieID == id && s.IsActive && s.StartTime > now)
+                    .OrderBy(s => s.StartTime)
+                    .ToList()
+            };
+
+            return View(vm);
         }
         catch (Exception)
         {
-            return Json(new { success = false, message = "Không tải được suất chiếu." });
+            TempData["Error"] = "Không tải được thông tin phim. Vui lòng thử lại.";
+            return RedirectToAction(nameof(Index));
         }
     }
 
-    // ---------- Bước 2: trang sơ đồ ghế ----------
+    // ---------- Bước 3: trang sơ đồ ghế ----------
     [HttpGet]
     public async Task<IActionResult> SeatMap(int showtimeId)
     {
@@ -97,7 +147,7 @@ public class BookingController : Controller
         }
     }
 
-    // ---------- Bước 3: tạo booking ----------
+    // ---------- Bước 4: tạo booking ----------
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([FromBody] CreateBookingRequest request)
