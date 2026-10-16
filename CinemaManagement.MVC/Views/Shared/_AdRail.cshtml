@@ -1,0 +1,36 @@
+﻿@using CinemaManagement.MVC.Helpers
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@model string
+@{
+    var extensions = new[] { "jpg", "png", "webp" };
+}
+
+@foreach (var p in PromotionCatalog.ForRail(Model))
+{
+    // Có ảnh banner riêng (wwwroot/images/banners/{mã}.jpg|png|webp) thì dùng ảnh
+    var imagePath = extensions
+        .Select(ext => $"images/banners/{p.Code}.{ext}")
+        .FirstOrDefault(path => Env.WebRootFileProvider.GetFileInfo(path).Exists);
+
+    if (imagePath != null)
+    {
+        <a class="ad-card ad-card--img" asp-controller="Promotion" asp-action="Index" asp-fragment="@p.Code">
+            <img class="ad-card__img" src="@Url.Content("~/" + imagePath)" alt="" loading="lazy" />
+            <span class="visually-hidden">@p.Title</span>
+        </a>
+    }
+    else
+    {
+        <a class="ad-card" asp-controller="Promotion" asp-action="Index" asp-fragment="@p.Code"
+           style="--hue:@p.Hue" aria-label="@p.Title">
+            <span class="ad-card__badge">@p.Badge</span>
+            <span class="ad-card__big">@p.BigText</span>
+            <span class="ad-card__title">@p.Title</span>
+            @if (!p.IsLive)
+            {
+                <span class="ad-card__soon">Sắp áp dụng</span>
+            }
+            <span class="ad-card__cta">Xem chi tiết &rarr;</span>
+        </a>
+    }
+}

@@ -1,0 +1,52 @@
+﻿@using CinemaManagement.MVC.Helpers
+@model IReadOnlyList<Promotion>
+@{
+    ViewData["Title"] = "Khuyến mãi";
+    var loggedIn = SessionHelper.IsLoggedIn(Context.Session);
+}
+
+<div class="mb-4">
+    <h2 class="mb-1">Khuyến mãi và ưu đãi</h2>
+    <p class="text-muted mb-0">Các chương trình dành cho khách đặt vé tại Cinema Management.</p>
+</div>
+
+<div class="promo-grid">
+    @foreach (var p in Model)
+    {
+        <article class="promo-card" id="@p.Code" style="--hue:@p.Hue">
+            <header class="promo-card__head">
+                <span class="promo-card__badge">@p.Badge</span>
+                <span class="promo-card__big">@p.BigText</span>
+            </header>
+
+            <div class="promo-card__body">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <h3 class="promo-card__title">@p.Title</h3>
+                    @if (p.IsLive)
+                    {
+                        <span class="status-chip status-chip--live">Đang áp dụng</span>
+                    }
+                    else
+                    {
+                        <span class="status-chip status-chip--soon">Sắp áp dụng</span>
+                    }
+                </div>
+
+                <p class="mb-2">@p.Summary</p>
+
+                <ul class="promo-card__list">
+                    @foreach (var d in p.Details)
+                    {
+                        <li>@d</li>
+                    }
+                </ul>
+
+                <p class="promo-card__valid">@p.Validity</p>
+
+                <a asp-controller="Booking" asp-action="Index" class="btn btn-primary mt-auto">
+                    @(loggedIn ? "Đặt vé ngay" : "Đăng nhập để đặt vé")
+                </a>
+            </div>
+        </article>
+    }
+</div>

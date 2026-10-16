@@ -3,6 +3,13 @@
     var isLoggedIn = SessionHelper.IsLoggedIn(Context.Session);
     var role = SessionHelper.GetRole(Context.Session);
     var fullName = SessionHelper.GetFullName(Context.Session) ?? SessionHelper.GetUsername(Context.Session);
+
+    // Banner hai bên chỉ hiện ở các trang "khách hàng" cần nhiều không gian trang trí
+    var controllerName = ViewContext.RouteData.Values["controller"]?.ToString();
+    var actionName = ViewContext.RouteData.Values["action"]?.ToString();
+    var showRails =
+        (controllerName == "Home" && actionName == "Index") ||
+        (controllerName == "Booking" && (actionName == "Index" || actionName == "Movie"));
 }
 <!DOCTYPE html>
 <html lang="vi" data-bs-theme="dark">
@@ -16,6 +23,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/cinema-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/promo.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
@@ -53,6 +61,7 @@
                                 <li class="nav-item"><a class="nav-link" asp-controller="Member" asp-action="Profile">Hồ sơ</a></li>
                             }
                         }
+                        <li class="nav-item"><a class="nav-link" asp-controller="Promotion" asp-action="Index">Khuyến mãi</a></li>
                     </ul>
 
                     <ul class="navbar-nav align-items-sm-center">
@@ -83,10 +92,28 @@
         </nav>
     </header>
 
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+    <div class="page-shell @(showRails ? "page-shell--rails" : "")">
+        @if (showRails)
+        {
+            <aside class="ad-rail ad-rail--left" aria-label="Khuyến mãi">
+                <partial name="_AdRail" model='"left"' />
+            </aside>
+        }
+
+        <div class="page-main">
+            <div class="container">
+                <main role="main" class="pb-3">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+
+        @if (showRails)
+        {
+            <aside class="ad-rail ad-rail--right" aria-label="Khuyến mãi">
+                <partial name="_AdRail" model='"right"' />
+            </aside>
+        }
     </div>
 
     <footer class="border-top footer text-muted mt-4">

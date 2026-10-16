@@ -1,7 +1,9 @@
 ﻿using CinemaManagement.MVC.Helpers;
+using CinemaManagement.MVC.Hubs;
 using CinemaManagement.MVC.Services;
 using CinemaManagement.MVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace CinemaManagement.MVC.Controllers;
 
@@ -10,11 +12,13 @@ public class BookingController : Controller
 {
     private readonly ApiService _api;
     private readonly IConfiguration _config;
+    private readonly IHubContext<SeatHub> _hub;
 
-    public BookingController(ApiService api, IConfiguration config)
+    public BookingController(ApiService api, IConfiguration config, IHubContext<SeatHub> hub)
     {
         _api = api;
         _config = config;
+        _hub = hub;
     }
 
     // ---------- Bước 1: lưới poster các phim đang chiếu ----------
@@ -167,7 +171,11 @@ public class BookingController : Controller
 
             // Thành công: API trả dữ liệu và BookingResponse.Success = true
             if (data != null && data.Success)
+            {
+                // Báo ngay cho mọi người đang xem suất chiếu này
+                await BroadcastSeatsBookedAsync(request.ShowtimeId, request.SeatIds);
                 return Json(new { success = true, data });
+            }
 
             // Thất bại: ưu tiên thông báo của API, sau đó tới thông báo của ApiService
             var message = !string.IsNullOrWhiteSpace(data?.Message) ? data!.Message
@@ -187,6 +195,23 @@ public class BookingController : Controller
         }
     }
 
+    // ---------- Hàm phụ ----------
+
     // Đọc MemberId từ Session (chịu được cả SetString lẫn SetInt32)
     private int? GetSessionMemberId() => HttpContext.Session.GetMemberIdOrNull();
+
+    // Gửi danh sách ghế vừa đặt cho mọi trình duyệt đang xem suất chiếu này.
+    // Lỗi ở bước này không được làm hỏng việc đặt vé đã thành công.
+    private async Task BroadcastSeatsBookedAsync(int showtimeId, List<int> seatIds)
+    {
+        try
+        {
+            await _hub.Clients.Group(SeatHub.GroupName(showtimeId))
+                .SendAsync("SeatsBooked", new { showtimeId, seatIds });
+        }
+        catch (Exception)
+        {
+            // Các trình duyệt vẫn tự cập nhật khi hỏi lại máy chủ định kỳ
+        }
+    }
 }

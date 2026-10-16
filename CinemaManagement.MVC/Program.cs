@@ -1,7 +1,12 @@
+using CinemaManagement.MVC.Hubs;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services
 builder.Services.AddControllersWithViews();
+
+// Cập nhật ghế theo thời gian thực
+builder.Services.AddSignalR();
 
 // Cho phép ApiService đọc Session (lấy token)
 builder.Services.AddHttpContextAccessor();
@@ -36,11 +41,14 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseSession();          
+app.UseSession();          // ← quan trọng
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Kênh thời gian thực cho sơ đồ ghế
+app.MapHub<SeatHub>("/hubs/seats");
 
 app.Run();
