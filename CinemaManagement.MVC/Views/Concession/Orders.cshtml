@@ -1,0 +1,81 @@
+﻿@using System.Globalization
+@using CinemaManagement.MVC.ViewModels
+@model FoodOrdersPageViewModel
+@{
+    ViewData["Title"] = "Đơn bắp nước của tôi";
+}
+
+@functions {
+    static string Money(decimal value) =>
+        value.ToString("N0", new CultureInfo("vi-VN")) + "đ";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/concession.css" asp-append-version="true" />
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-4">
+    <div>
+        <h2 class="mb-1">Đơn bắp nước của tôi</h2>
+        <p class="text-muted mb-0">30 đơn gần nhất. Đưa mã đơn tại quầy để nhận món.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-primary">Đặt thêm</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.LoadFailed)
+{
+    <div class="alert alert-warning">Chưa tải được danh sách đơn. Vui lòng tải lại trang sau ít phút.</div>
+}
+else if (Model.Orders.Count == 0)
+{
+    <div class="empty-state">
+        <p class="mb-3">Bạn chưa có đơn bắp nước nào.</p>
+        <a asp-action="Index" class="btn btn-primary">Xem thực đơn</a>
+    </div>
+}
+else
+{
+    <div class="order-list">
+        @foreach (var o in Model.Orders)
+        {
+            <article class="order-card">
+                <header class="order-card__head">
+                    <div>
+                        <div class="order-card__code">@o.OrderCode</div>
+                        <div class="order-card__time">@o.CreatedAt.ToString("HH:mm dd/MM/yyyy")</div>
+                    </div>
+                    <span class="status-chip @o.StatusCss">@o.StatusText</span>
+                </header>
+
+                <ul class="order-card__items">
+                    @foreach (var i in o.Items)
+                    {
+                        <li>
+                            <span>@i.ItemName &times; @i.Quantity</span>
+                            <span>@Money(i.UnitPrice * i.Quantity)</span>
+                        </li>
+                    }
+                </ul>
+
+                @if (!string.IsNullOrWhiteSpace(o.Note))
+                {
+                    <p class="order-card__note">Ghi chú: @o.Note</p>
+                }
+
+                <footer class="order-card__foot">
+                    <span>Tổng cộng</span>
+                    <strong>@Money(o.TotalAmount)</strong>
+                </footer>
+            </article>
+        }
+    </div>
+}

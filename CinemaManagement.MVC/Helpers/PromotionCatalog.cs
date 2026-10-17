@@ -2,7 +2,7 @@
 
 /// <summary>Một chương trình khuyến mãi / ưu đãi.</summary>
 /// <param name="Code">Mã ngắn, cũng là tên file ảnh banner (ví dụ weekend.jpg).</param>
-/// <param name="Rail">"left" hoặc "right": banner hiện ở rìa trái hay phải.</param>
+/// <param name="Rail">"left" hoặc "right": banner hiện ở rìa nào.</param>
 /// <param name="IsLive">false = chưa áp dụng thật, hiện nhãn "Sắp áp dụng".</param>
 public record Promotion(
     string Code,
@@ -42,16 +42,16 @@ public static class PromotionCatalog
             Badge: "BẮP NƯỚC",
             BigText: "COMBO",
             Title: "Combo bắp nước",
-            Summary: "Đặt bắp và nước ngay khi chọn ghế, nhận tại quầy trước giờ chiếu.",
+            Summary: "Đặt bắp và nước trực tuyến, nhận tại quầy trước giờ chiếu.",
             Details: new[]
             {
-                "Chọn bắp, nước hoặc combo ngay ở bước chọn ghế.",
-                "Thanh toán một lần cùng tiền vé.",
-                "Nhận tại quầy bắp nước trước giờ chiếu."
+                "Chọn món ở mục Bắp nước trên thanh menu.",
+                "Nhận mã đơn ngay sau khi đặt.",
+                "Đưa mã đơn tại quầy bắp nước để nhận món."
             },
-            Validity: "Áp dụng cho mọi suất chiếu",
+            Validity: "Mỗi ngày, tại quầy bắp nước",
             Hue: 8,
-            IsLive: false,
+            IsLive: true,
             Rail: "right"),
 
         new(

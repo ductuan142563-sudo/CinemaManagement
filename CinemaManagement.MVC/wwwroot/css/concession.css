@@ -1,0 +1,212 @@
+﻿/* ============ Thực đơn bắp nước ============ */
+.food-group {
+    margin-bottom: 2rem;
+}
+
+.food-group__title {
+    margin-bottom: 1rem;
+    font-size: 1.15rem;
+}
+
+.food-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1rem;
+}
+
+.food-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.food-card__tile {
+    display: flex;
+    align-items: flex-end;
+    min-height: 84px;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, hsl(var(--hue) 55% 32%) 0%, hsl(calc(var(--hue) + 30) 55% 14%) 100%);
+    color: var(--gold);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.food-card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1rem;
+}
+
+.food-card__name {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.food-card__desc {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.food-card__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+}
+
+.food-card__price {
+    font-weight: 700;
+    color: var(--gold);
+}
+
+/* ---------- Nút tăng giảm số lượng ---------- */
+.stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.qty-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel-2);
+    color: var(--cream);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+    .qty-btn:hover,
+    .qty-btn:focus-visible {
+        border-color: var(--gold);
+        color: var(--gold);
+    }
+
+.qty-input {
+    width: 48px;
+    height: 32px;
+    padding: 0;
+    text-align: center;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--cream);
+    -moz-appearance: textfield;
+}
+
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .qty-input:focus {
+        outline: none;
+        border-color: var(--gold);
+    }
+
+/* ---------- Khung đơn của bạn ---------- */
+.order-panel {
+    position: sticky;
+    top: 5.5rem;
+}
+
+.order-lines {
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+    .order-lines li {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.35rem 0;
+        border-bottom: 1px dashed var(--line);
+    }
+
+/* ============ Đơn của tôi ============ */
+.order-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+}
+
+.order-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.order-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.order-card__code {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--gold);
+    letter-spacing: 0.03em;
+}
+
+.order-card__time {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.order-card__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+    .order-card__items li {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.25rem 0;
+    }
+
+.order-card__note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.order-card__foot {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 0.75rem;
+    border-top: 2px dashed var(--line);
+}
+
+.status-chip--done {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--line);
+}
+
+.status-chip--cancel {
+    background: rgba(184, 40, 58, 0.16);
+    color: #ffb4bd;
+    border: 1px solid rgba(184, 40, 58, 0.55);
+}

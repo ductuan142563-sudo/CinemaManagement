@@ -13,6 +13,9 @@
 <div class="promo-grid">
     @foreach (var p in Model)
     {
+        var ctaController = p.Code == "combo" ? "Concession" : "Booking";
+        var ctaText = p.Code == "combo" ? "Đặt bắp nước" : "Đặt vé ngay";
+
         <article class="promo-card" id="@p.Code" style="--hue:@p.Hue">
             <header class="promo-card__head">
                 <span class="promo-card__badge">@p.Badge</span>
@@ -43,8 +46,8 @@
 
                 <p class="promo-card__valid">@p.Validity</p>
 
-                <a asp-controller="Booking" asp-action="Index" class="btn btn-primary mt-auto">
-                    @(loggedIn ? "Đặt vé ngay" : "Đăng nhập để đặt vé")
+                <a asp-controller="@ctaController" asp-action="Index" class="btn btn-primary mt-auto">
+                    @(loggedIn ? ctaText : "Đăng nhập để đặt")
                 </a>
             </div>
         </article>

@@ -1,0 +1,132 @@
+﻿@using System.Globalization
+@using CinemaManagement.MVC.ViewModels
+@model ConcessionMenuViewModel
+@{
+    ViewData["Title"] = "Bắp nước";
+
+    var categoryOrder = new[] { "Combo", "Bắp", "Nước" };
+    var groups = Model.Items
+        .GroupBy(i => i.Category)
+        .OrderBy(g => { var idx = Array.IndexOf(categoryOrder, g.Key); return idx < 0 ? 99 : idx; })
+        .ToList();
+}
+
+@functions {
+    static string Money(decimal value) =>
+        value.ToString("N0", new CultureInfo("vi-VN")) + "đ";
+
+    static string CategoryTitle(string category) => category switch
+    {
+        "Combo" => "Combo tiết kiệm",
+        "Bắp" => "Bắp rang",
+        "Nước" => "Nước uống",
+        _ => category
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/concession.css" asp-append-version="true" />
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-4">
+    <div>
+        <h2 class="mb-1">Bắp nước</h2>
+        <p class="text-muted mb-0">Đặt trước, nhận tại quầy bắp nước bằng mã đơn.</p>
+    </div>
+    <a asp-action="Orders" class="btn btn-outline-primary">Đơn của tôi</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.LoadFailed)
+{
+    <div class="alert alert-warning">Chưa tải được thực đơn. Vui lòng tải lại trang sau ít phút.</div>
+}
+else if (Model.Items.Count == 0)
+{
+    <div class="empty-state"><p class="mb-0">Thực đơn hiện chưa có món nào.</p></div>
+}
+else
+{
+    <form id="orderForm" asp-action="Create" method="post">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                @foreach (var group in groups)
+                {
+                    <section class="food-group">
+                        <h3 class="food-group__title">@CategoryTitle(group.Key)</h3>
+                        <div class="food-grid">
+                            @foreach (var item in group)
+                            {
+                                <article class="food-card" style="--hue:@item.Hue">
+                                    <div class="food-card__tile" aria-hidden="true">@item.Category</div>
+                                    <div class="food-card__body">
+                                        <h4 class="food-card__name">@item.Name</h4>
+                                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                                        {
+                                            <p class="food-card__desc">@item.Description</p>
+                                        }
+                                        <div class="food-card__foot">
+                                            <span class="food-card__price">@Money(item.Price)</span>
+                                            <div class="stepper">
+                                                <button type="button" class="qty-btn" data-action="dec"
+                                                        aria-label="Giảm số lượng @item.Name">
+                                                    &minus;
+                                                </button>
+                                                <input type="number" class="qty-input"
+                                                       name="quantities[@item.ConcessionItemID]" value="0"
+                                                       min="0" max="10" inputmode="numeric"
+                                                       data-name="@item.Name"
+                                                       data-price="@item.Price.ToString("0.##", CultureInfo.InvariantCulture)"
+                                                       aria-label="Số lượng @item.Name" />
+                                                <button type="button" class="qty-btn" data-action="inc"
+                                                        aria-label="Tăng số lượng @item.Name">
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                    </section>
+                }
+            </div>
+
+            <div class="col-lg-4">
+                <aside class="order-panel card">
+                    <div class="card-body">
+                        <h5 class="card-title">Đơn của bạn</h5>
+
+                        <ul id="orderLines" class="order-lines" aria-live="polite">
+                            <li class="text-muted" id="orderEmpty">Chưa chọn món nào.</li>
+                        </ul>
+
+                        <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                            <span>Tổng cộng</span>
+                            <span id="orderTotal">0đ</span>
+                        </div>
+
+                        <label for="note" class="form-label">Ghi chú (tùy chọn)</label>
+                        <textarea id="note" name="note" class="form-control mb-3" rows="2" maxlength="200"
+                                  placeholder="Ví dụ: ít đá, nhận cùng suất 19:30"></textarea>
+
+                        <button id="btnOrder" type="submit" class="btn btn-primary w-100" disabled>Đặt bắp nước</button>
+                        <div class="form-text mt-2">Nhận món tại quầy bắp nước, đưa mã đơn cho nhân viên.</div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </form>
+}
+
+@section Scripts {
+    <script src="~/js/concession.js" asp-append-version="true"></script>
+}

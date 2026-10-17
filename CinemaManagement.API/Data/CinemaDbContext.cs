@@ -21,6 +21,11 @@ namespace CinemaManagement.API.Data
         public DbSet<BookingDetail> BookingDetails => Set<BookingDetail>();
         public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
 
+        // Bắp nước
+        public DbSet<ConcessionItem> ConcessionItems => Set<ConcessionItem>();
+        public DbSet<FoodOrder> FoodOrders => Set<FoodOrder>();
+        public DbSet<FoodOrderItem> FoodOrderItems => Set<FoodOrderItem>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -30,6 +35,7 @@ namespace CinemaManagement.API.Data
             modelBuilder.Entity<Member>().HasIndex(m => m.MembershipCode).IsUnique();
             modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
             modelBuilder.Entity<Booking>().HasIndex(b => b.BookingCode).IsUnique();
+            modelBuilder.Entity<FoodOrder>().HasIndex(o => o.OrderCode).IsUnique();
 
             // ========== PRECISION ==========
             modelBuilder.Entity<MembershipTier>().Property(t => t.DiscountPercent).HasPrecision(5, 2);
@@ -39,6 +45,9 @@ namespace CinemaManagement.API.Data
             modelBuilder.Entity<Booking>().Property(b => b.DiscountAmount).HasPrecision(12, 2);
             modelBuilder.Entity<Booking>().Property(b => b.FinalAmount).HasPrecision(12, 2);
             modelBuilder.Entity<BookingDetail>().Property(d => d.Price).HasPrecision(10, 2);
+            modelBuilder.Entity<ConcessionItem>().Property(i => i.Price).HasPrecision(10, 2);
+            modelBuilder.Entity<FoodOrder>().Property(o => o.TotalAmount).HasPrecision(12, 2);
+            modelBuilder.Entity<FoodOrderItem>().Property(i => i.UnitPrice).HasPrecision(10, 2);
 
             // ========== RELATIONSHIPS ==========
             modelBuilder.Entity<Member>()
@@ -107,6 +116,24 @@ namespace CinemaManagement.API.Data
                 .HasForeignKey(pt => pt.MemberID)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<FoodOrder>()
+                .HasOne<User>()
+                .WithMany()
+                .HasForeignKey(o => o.UserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FoodOrderItem>()
+                .HasOne(i => i.Order)
+                .WithMany(o => o.Items)
+                .HasForeignKey(i => i.FoodOrderID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<FoodOrderItem>()
+                .HasOne(i => i.Item)
+                .WithMany()
+                .HasForeignKey(i => i.ConcessionItemID)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // ========== SEED DATA ==========
             modelBuilder.Entity<MembershipTier>().HasData(
                 new MembershipTier { TierID = 1, TierName = "Silver", MinPoints = 0, DiscountPercent = 0, PointRate = 1, Description = "Hang co ban" },
@@ -140,6 +167,13 @@ namespace CinemaManagement.API.Data
                 new Hall { HallID = 2, HallName = "Phong 2", TotalSeats = 60, RowsCount = 6, SeatsPerRow = 10 }
             );
 
+            modelBuilder.Entity<ConcessionItem>().HasData(
+                new ConcessionItem { ConcessionItemID = 1, Name = "Bắp ngọt", Description = "Bắp rang bơ vị ngọt.", Category = "Bắp", Price = 40000, IsActive = true },
+                new ConcessionItem { ConcessionItemID = 2, Name = "Bắp phô mai", Description = "Bắp rang bơ phủ bột phô mai.", Category = "Bắp", Price = 45000, IsActive = true },
+                new ConcessionItem { ConcessionItemID = 3, Name = "Nước ngọt", Description = "Nước ngọt có ga.", Category = "Nước", Price = 25000, IsActive = true },
+                new ConcessionItem { ConcessionItemID = 4, Name = "Combo 1 bắp + 1 nước", Description = "1 bắp ngọt và 1 nước ngọt.", Category = "Combo", Price = 59000, IsActive = true },
+                new ConcessionItem { ConcessionItemID = 5, Name = "Combo 1 bắp + 2 nước", Description = "1 bắp ngọt và 2 nước ngọt.", Category = "Combo", Price = 79000, IsActive = true }
+            );
         }
     }
 }
