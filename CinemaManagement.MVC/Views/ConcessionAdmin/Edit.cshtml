@@ -1,0 +1,14 @@
+﻿@model CinemaManagement.MVC.ViewModels.ConcessionAdminItemViewModel
+@{
+    ViewData["Title"] = "Sửa món";
+    ViewData["FormAction"] = "Edit";
+    ViewData["SubmitText"] = "Cập nhật";
+}
+
+<h2 class="mb-4">Sửa món</h2>
+
+<partial name="_ItemForm" model="Model" />
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

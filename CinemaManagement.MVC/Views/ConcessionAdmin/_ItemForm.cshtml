@@ -1,0 +1,49 @@
+﻿@model CinemaManagement.MVC.ViewModels.ConcessionAdminItemViewModel
+@{
+    var formAction = ViewData["FormAction"]?.ToString() ?? "Create";
+    var submitText = ViewData["SubmitText"]?.ToString() ?? "Lưu";
+}
+
+<form asp-action="@formAction" method="post" style="max-width: 640px;">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <input type="hidden" asp-for="ConcessionItemID" />
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label">Tên món *</label>
+        <input asp-for="Name" class="form-control" maxlength="100" placeholder="Ví dụ: Bắp caramel" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Category" class="form-label">Nhóm *</label>
+            <select asp-for="Category" class="form-select">
+                <option value="Combo">Combo</option>
+                <option value="Bắp">Bắp rang</option>
+                <option value="Nước">Nước uống</option>
+            </select>
+            <span asp-validation-for="Category" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="Price" class="form-label">Giá (đồng) *</label>
+            <input asp-for="Price" class="form-control" type="number" min="1000" max="1000000" step="1000" />
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label">Mô tả</label>
+        <textarea asp-for="Description" class="form-control" rows="3" maxlength="300"
+                  placeholder="Ví dụ: Bắp rang bơ vị caramel."></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3 form-check">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label">Đang bán (hiện trên thực đơn khách)</label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">@submitText</button>
+    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+</form>

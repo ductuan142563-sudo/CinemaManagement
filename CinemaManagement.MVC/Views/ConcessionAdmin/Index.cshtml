@@ -1,0 +1,110 @@
+﻿@using System.Globalization
+@using CinemaManagement.MVC.ViewModels
+@model ConcessionAdminPageViewModel
+@{
+    ViewData["Title"] = "Quản lý thực đơn bắp nước";
+}
+
+@functions {
+    static string Money(decimal value) =>
+        value.ToString("N0", new CultureInfo("vi-VN")) + "đ";
+
+    static string CategoryTitle(string category) => category switch
+    {
+        "Combo" => "Combo",
+        "Bắp" => "Bắp rang",
+        "Nước" => "Nước uống",
+        _ => category
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/concession.css" asp-append-version="true" />
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="mb-0">Quản lý thực đơn bắp nước</h2>
+    <div class="d-flex gap-2">
+        <a asp-controller="Concession" asp-action="Index" class="btn btn-outline-primary">Xem trang đặt</a>
+        <a asp-action="Create" class="btn btn-primary">+ Thêm món</a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.LoadError != null)
+{
+    <div class="alert alert-warning">
+        <strong>Không tải được thực đơn.</strong>
+        <div class="small mt-1">@Model.LoadError</div>
+    </div>
+}
+else if (Model.Items.Count == 0)
+{
+    <div class="empty-state">
+        <p class="mb-3">Thực đơn đang trống. Hãy thêm món đầu tiên.</p>
+        <a asp-action="Create" class="btn btn-primary">+ Thêm món</a>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th style="width:60px">ID</th>
+                    <th>Tên món</th>
+                    <th>Nhóm</th>
+                    <th class="text-end">Giá</th>
+                    <th>Trạng thái</th>
+                    <th style="width:170px">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model.Items)
+                {
+                    <tr>
+                        <td>@m.ConcessionItemID</td>
+                        <td>
+                            <div class="fw-semibold">@m.Name</div>
+                            @if (!string.IsNullOrWhiteSpace(m.Description))
+                            {
+                                <div class="small text-muted">@m.Description</div>
+                            }
+                        </td>
+                        <td>@CategoryTitle(m.Category)</td>
+                        <td class="text-end">@Money(m.Price)</td>
+                        <td>
+                            @if (m.IsActive)
+                            {
+                                <span class="status-chip status-chip--live">Đang bán</span>
+                            }
+                            else
+                            {
+                                <span class="status-chip status-chip--done">Đã ẩn</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@m.ConcessionItemID" class="btn btn-sm btn-warning">Sửa</a>
+
+                            <form asp-action="SetActive" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@m.ConcessionItemID" />
+                                <input type="hidden" name="isActive" value="@((!m.IsActive).ToString().ToLowerInvariant())" />
+                                <button type="submit" class="btn btn-sm @(m.IsActive ? "btn-outline-danger" : "btn-outline-primary")">
+                                    @(m.IsActive ? "Ẩn" : "Hiện lại")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

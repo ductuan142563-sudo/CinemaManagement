@@ -1,8 +1,11 @@
 ﻿@using System.Globalization
+@using CinemaManagement.MVC.Helpers
 @using CinemaManagement.MVC.ViewModels
 @model ConcessionMenuViewModel
 @{
     ViewData["Title"] = "Bắp nước";
+
+    var isAdmin = SessionHelper.GetRole(Context.Session) == "Admin";
 
     var categoryOrder = new[] { "Combo", "Bắp", "Nước" };
     var groups = Model.Items
@@ -33,7 +36,13 @@
         <h2 class="mb-1">Bắp nước</h2>
         <p class="text-muted mb-0">Đặt trước, nhận tại quầy bắp nước bằng mã đơn.</p>
     </div>
-    <a asp-action="Orders" class="btn btn-outline-primary">Đơn của tôi</a>
+    <div class="d-flex gap-2">
+        @if (isAdmin)
+        {
+            <a asp-controller="ConcessionAdmin" asp-action="Index" class="btn btn-outline-primary">Quản lý thực đơn</a>
+        }
+        <a asp-action="Orders" class="btn btn-outline-primary">Đơn của tôi</a>
+    </div>
 </div>
 
 @if (TempData["Success"] != null)
@@ -47,11 +56,23 @@
 
 @if (Model.LoadFailed)
 {
-    <div class="alert alert-warning">Chưa tải được thực đơn. Vui lòng tải lại trang sau ít phút.</div>
+    <div class="alert alert-warning">
+        Chưa tải được thực đơn. Vui lòng tải lại trang sau ít phút.
+        @if (isAdmin)
+        {
+            <div class="small mt-1">Admin: mở <strong>Quản lý thực đơn</strong> để xem chi tiết lỗi.</div>
+        }
+    </div>
 }
 else if (Model.Items.Count == 0)
 {
-    <div class="empty-state"><p class="mb-0">Thực đơn hiện chưa có món nào.</p></div>
+    <div class="empty-state">
+        <p class="mb-3">Thực đơn hiện chưa có món nào.</p>
+        @if (isAdmin)
+        {
+            <a asp-controller="ConcessionAdmin" asp-action="Create" class="btn btn-primary">+ Thêm món</a>
+        }
+    </div>
 }
 else
 {

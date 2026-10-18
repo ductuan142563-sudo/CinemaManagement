@@ -9,6 +9,32 @@
         public decimal Price { get; set; }
     }
 
+    /// <summary>Món trong thực đơn, kèm trạng thái (dùng cho trang quản lý của Admin).</summary>
+    public class ConcessionAdminDto
+    {
+        public int ConcessionItemID { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string Category { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public bool IsActive { get; set; }
+    }
+
+    /// <summary>Dữ liệu thêm hoặc sửa một món.</summary>
+    public class ConcessionItemRequest
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string Category { get; set; } = string.Empty;   // Combo | Bắp | Nước
+        public decimal Price { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+
+    public class ConcessionActiveRequest
+    {
+        public bool IsActive { get; set; }
+    }
+
     public class FoodOrderItemRequest
     {
         public int ConcessionItemID { get; set; }
