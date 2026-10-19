@@ -45,6 +45,7 @@
     {
         public List<FoodOrderItemRequest> Items { get; set; } = new();
         public string? Note { get; set; }
+        public string PaymentMethod { get; set; } = string.Empty;   // COD | QR
     }
 
     public class FoodOrderItemDto
@@ -61,7 +62,17 @@
         public string? Note { get; set; }
         public decimal TotalAmount { get; set; }
         public string Status { get; set; } = string.Empty;
+        public string PaymentMethod { get; set; } = string.Empty;
+        public string PaymentStatus { get; set; } = string.Empty;
+        public DateTime? PaidAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<FoodOrderItemDto> Items { get; set; } = new();
+    }
+
+    /// <summary>Đơn kèm thông tin khách (dùng cho trang xử lý của nhân viên).</summary>
+    public class FoodOrderManageDto : FoodOrderDto
+    {
+        public string CustomerName { get; set; } = string.Empty;
+        public string Username { get; set; } = string.Empty;
     }
 }

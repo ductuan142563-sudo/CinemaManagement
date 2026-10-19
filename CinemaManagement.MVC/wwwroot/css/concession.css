@@ -137,6 +137,115 @@
         border-bottom: 1px dashed var(--line);
     }
 
+/* ---------- Chọn phương thức thanh toán ---------- */
+.pay-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0 0 1rem;
+    padding: 0;
+    border: 0;
+}
+
+    .pay-methods legend {
+        float: none;
+        width: auto;
+        margin-bottom: 0.5rem;
+        padding: 0;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+.pay-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+    .pay-option:hover {
+        border-color: var(--gold);
+    }
+
+    .pay-option:has(input:checked) {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 1px var(--gold) inset;
+    }
+
+    .pay-option input {
+        margin-top: 0.25rem;
+        accent-color: var(--velvet);
+    }
+
+.pay-option__body {
+    display: flex;
+    flex-direction: column;
+}
+
+    .pay-option__body small {
+        color: var(--muted);
+    }
+
+.pay-option--off {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+    .pay-option--off:hover {
+        border-color: var(--line);
+    }
+
+/* ============ Chi tiết đơn và mã QR ============ */
+.pay-box {
+    padding: 1.25rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.qr-image {
+    display: block;
+    width: 260px;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto 1rem;
+    padding: 0.5rem;
+    background: #fff;
+    border-radius: 12px;
+}
+
+.pay-info {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.4rem 1rem;
+    margin: 0;
+}
+
+    .pay-info dt {
+        color: var(--muted);
+        font-weight: 500;
+    }
+
+    .pay-info dd {
+        margin: 0;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+.order-code {
+    color: var(--gold);
+    letter-spacing: 0.03em;
+    font-weight: 800;
+}
+
+a.order-code:hover {
+    color: #ffd27a;
+}
+
 /* ============ Đơn của tôi ============ */
 .order-list {
     display: grid;
@@ -166,6 +275,10 @@
     font-weight: 800;
     color: var(--gold);
     letter-spacing: 0.03em;
+}
+
+a.order-card__code:hover {
+    color: #ffd27a;
 }
 
 .order-card__time {
@@ -199,6 +312,7 @@
     border-top: 2px dashed var(--line);
 }
 
+/* ---------- Nhãn trạng thái (nhãn gốc nằm trong promo.css) ---------- */
 .status-chip--done {
     background: transparent;
     color: var(--muted);
@@ -209,4 +323,10 @@
     background: rgba(184, 40, 58, 0.16);
     color: #ffb4bd;
     border: 1px solid rgba(184, 40, 58, 0.55);
+}
+
+.status-chip--info {
+    background: rgba(90, 160, 220, 0.15);
+    color: #a9d2f5;
+    border: 1px solid rgba(90, 160, 220, 0.45);
 }

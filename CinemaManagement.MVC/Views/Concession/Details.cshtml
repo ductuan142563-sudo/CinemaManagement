@@ -1,0 +1,146 @@
+﻿@using System.Globalization
+@using CinemaManagement.MVC.ViewModels
+@model FoodOrderDetailsViewModel
+@{
+    var o = Model.Order;
+    var qr = Model.Qr;
+    ViewData["Title"] = "Đơn " + o.OrderCode;
+
+    var cancelled = o.Status == "Cancelled";
+    var paid = o.PaymentStatus == "Paid";
+    var waitingQr = !cancelled && !paid && o.PaymentMethod == "QR";
+}
+
+@functions {
+    static string Money(decimal value) =>
+        value.ToString("N0", new CultureInfo("vi-VN")) + "đ";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/concession.css" asp-append-version="true" />
+}
+
+<a asp-action="Orders" class="btn btn-link px-0">&larr; Đơn của tôi</a>
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+    <h2 class="mb-0">Đơn bắp nước <span class="order-code">@o.OrderCode</span></h2>
+    <span class="status-chip @o.StatusCss">@o.StatusText</span>
+    <span class="status-chip @o.PaymentCss">@o.PaymentStatusText</span>
+</div>
+<p class="text-muted">Đặt lúc @o.CreatedAt.ToString("HH:mm dd/MM/yyyy")</p>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="pay-box">
+            <h5 class="mb-3">Món đã đặt</h5>
+
+            <ul class="order-card__items">
+                @foreach (var i in o.Items)
+                {
+                    <li>
+                        <span>@i.ItemName &times; @i.Quantity</span>
+                        <span>@Money(i.UnitPrice * i.Quantity)</span>
+                    </li>
+                }
+            </ul>
+
+            @if (!string.IsNullOrWhiteSpace(o.Note))
+            {
+                <p class="order-card__note mt-2 mb-0">Ghi chú: @o.Note</p>
+            }
+
+            <div class="order-card__foot mt-3">
+                <span>Tổng cộng</span>
+                <strong>@Money(o.TotalAmount)</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="pay-box" @(waitingQr ? Html.Raw($"id=\"payPanel\" data-code=\"{Html.Encode(o.OrderCode)}\"") : null)>
+            <h5 class="mb-3">Thanh toán</h5>
+            <p class="mb-3">Phương thức: <strong>@o.PaymentMethodText</strong></p>
+
+            @if (cancelled)
+            {
+                <div class="alert alert-secondary mb-0">Đơn này đã bị hủy.</div>
+            }
+            else if (paid)
+            {
+                <div class="alert alert-success mb-3">
+                    Đã thanh toán
+                    @if (o.PaidAt.HasValue)
+                    {
+                        <span>lúc @o.PaidAt.Value.ToString("HH:mm dd/MM/yyyy")</span>
+                    }
+                </div>
+
+                @if (o.Status == "Completed")
+                {
+                    <p class="mb-0">Đơn đã được giao. Cảm ơn bạn!</p>
+                }
+                else
+                {
+                    <p class="mb-0">Đưa mã đơn <strong class="order-code">@o.OrderCode</strong> tại quầy bắp nước để nhận món.</p>
+                }
+            }
+            else if (o.PaymentMethod == "COD")
+            {
+                <div class="alert alert-warning mb-3">
+                    Cần thanh toán <strong>@Money(o.TotalAmount)</strong> bằng tiền mặt khi nhận món.
+                </div>
+                <p class="mb-0">Đưa mã đơn <strong class="order-code">@o.OrderCode</strong> tại quầy bắp nước, nhân viên sẽ thu tiền và giao món cho bạn.</p>
+            }
+            else if (qr != null)
+            {
+                <img class="qr-image" src="@qr.ImageUrl" width="260" height="260"
+                     alt="Mã QR chuyển khoản @Money(qr.Amount) cho đơn @o.OrderCode"
+                     onerror="this.style.display='none'; document.getElementById('qrFallback').hidden = false;" />
+
+                <div id="qrFallback" class="alert alert-warning" hidden>
+                    Không tải được ảnh mã QR (có thể do mất kết nối Internet). Bạn vẫn có thể chuyển khoản thủ công theo thông tin bên dưới.
+                </div>
+
+                <dl class="pay-info mb-3">
+                    <dt>Ngân hàng</dt>
+                    <dd>@qr.BankId</dd>
+                    <dt>Số tài khoản</dt>
+                    <dd>@qr.AccountNo</dd>
+                    <dt>Chủ tài khoản</dt>
+                    <dd>@qr.AccountName</dd>
+                    <dt>Số tiền</dt>
+                    <dd>@Money(qr.Amount)</dd>
+                    <dt>Nội dung</dt>
+                    <dd>@qr.TransferContent</dd>
+                </dl>
+
+                <p class="form-text mb-0">
+                    Quét mã bằng ứng dụng ngân hàng, giữ nguyên số tiền và nội dung chuyển khoản.
+                    Nhân viên sẽ xác nhận sau khi nhận được tiền, trang này tự cập nhật.
+                </p>
+            }
+            else
+            {
+                <div class="alert alert-warning mb-0">
+                    Chưa cấu hình tài khoản nhận tiền cho thanh toán QR. Vui lòng liên hệ quản trị viên hoặc thanh toán tại quầy.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (waitingQr)
+    {
+        <script src="~/js/payment-status.js" asp-append-version="true"></script>
+    }
+}

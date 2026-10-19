@@ -5,7 +5,9 @@
 @{
     ViewData["Title"] = "Bắp nước";
 
-    var isAdmin = SessionHelper.GetRole(Context.Session) == "Admin";
+    var role = SessionHelper.GetRole(Context.Session);
+    var isAdmin = role == "Admin";
+    var isStaff = role == "Admin" || role == "Staff";
 
     var categoryOrder = new[] { "Combo", "Bắp", "Nước" };
     var groups = Model.Items
@@ -36,7 +38,11 @@
         <h2 class="mb-1">Bắp nước</h2>
         <p class="text-muted mb-0">Đặt trước, nhận tại quầy bắp nước bằng mã đơn.</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
+        @if (isStaff)
+        {
+            <a asp-controller="FoodOrderManage" asp-action="Index" class="btn btn-outline-primary">Xử lý đơn</a>
+        }
         @if (isAdmin)
         {
             <a asp-controller="ConcessionAdmin" asp-action="Index" class="btn btn-outline-primary">Quản lý thực đơn</a>
@@ -134,6 +140,30 @@ else
                             <span>Tổng cộng</span>
                             <span id="orderTotal">0đ</span>
                         </div>
+
+                        <fieldset class="pay-methods">
+                            <legend>Phương thức thanh toán</legend>
+
+                            <label class="pay-option">
+                                <input type="radio" name="paymentMethod" value="COD" checked />
+                                <span class="pay-option__body">
+                                    <strong>Tiền mặt (COD)</strong>
+                                    <small>Thanh toán khi nhận món tại quầy.</small>
+                                </span>
+                            </label>
+
+                            <label class="pay-option @(Model.QrEnabled ? "" : "pay-option--off")">
+                                <input type="radio" name="paymentMethod" value="QR" disabled="@(!Model.QrEnabled)" />
+                                <span class="pay-option__body">
+                                    <strong>Quét mã QR</strong>
+                                    <small>
+                                        @(Model.QrEnabled
+                                            ? "Chuyển khoản ngân hàng bằng mã VietQR."
+                                            : "Chưa cấu hình tài khoản nhận tiền.")
+                                    </small>
+                                </span>
+                            </label>
+                        </fieldset>
 
                         <label for="note" class="form-label">Ghi chú (tùy chọn)</label>
                         <textarea id="note" name="note" class="form-control mb-3" rows="2" maxlength="200"

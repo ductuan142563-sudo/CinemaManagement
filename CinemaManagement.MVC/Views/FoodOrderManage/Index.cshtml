@@ -1,0 +1,172 @@
+﻿@using System.Globalization
+@using CinemaManagement.MVC.ViewModels
+@model FoodOrderManagePageViewModel
+@{
+    ViewData["Title"] = "Xử lý đơn bắp nước";
+}
+
+@functions {
+    static string Money(decimal value) =>
+        value.ToString("N0", new CultureInfo("vi-VN")) + "đ";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/concession.css" asp-append-version="true" />
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="mb-0">Xử lý đơn bắp nước</h2>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn btn-outline-primary">Tải lại</a>
+        <a asp-controller="Concession" asp-action="Index" class="btn btn-outline-primary">Trang đặt bắp nước</a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.LoadError != null)
+{
+    <div class="alert alert-warning">
+        <strong>Không tải được danh sách đơn.</strong>
+        <div class="small mt-1">@Model.LoadError</div>
+    </div>
+}
+else
+{
+    <h3 class="h5 mb-3">Đang chờ nhận món (@Model.Open.Count)</h3>
+
+    @if (Model.Open.Count == 0)
+    {
+        <div class="empty-state mb-4"><p class="mb-0">Không có đơn nào đang chờ.</p></div>
+    }
+    else
+    {
+        <div class="table-responsive mb-4">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Khách</th>
+                        <th>Món</th>
+                        <th class="text-end">Tổng</th>
+                        <th>Thanh toán</th>
+                        <th style="min-width:230px">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model.Open)
+                    {
+                        var canComplete = o.PaymentStatus == "Paid" || o.PaymentMethod == "COD";
+                        <tr>
+                            <td>
+                                <a asp-controller="Concession" asp-action="Details" asp-route-code="@o.OrderCode" class="order-code">@o.OrderCode</a>
+                                <div class="small text-muted">@o.CreatedAt.ToString("HH:mm dd/MM")</div>
+                            </td>
+                            <td>
+                                @o.CustomerName
+                                @if (!string.IsNullOrWhiteSpace(o.Username))
+                                {
+                                    <div class="small text-muted">@o.Username</div>
+                                }
+                            </td>
+                            <td>
+                                @foreach (var i in o.Items)
+                                {
+                                    <div>@i.ItemName &times; @i.Quantity</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(o.Note))
+                                {
+                                    <div class="small text-muted">Ghi chú: @o.Note</div>
+                                }
+                            </td>
+                            <td class="text-end">@Money(o.TotalAmount)</td>
+                            <td>
+                                <div class="small mb-1">@o.PaymentMethodText</div>
+                                <span class="status-chip @o.PaymentCss">@o.PaymentStatusText</span>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    @if (o.PaymentStatus != "Paid")
+                                    {
+                                        <form asp-action="ConfirmPayment" method="post">
+                                            <input type="hidden" name="code" value="@o.OrderCode" />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Xác nhận đã nhận tiền</button>
+                                        </form>
+                                    }
+
+                                    @if (canComplete)
+                                    {
+                                        <form asp-action="Complete" method="post">
+                                            <input type="hidden" name="code" value="@o.OrderCode" />
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                @(o.PaymentStatus == "Paid" ? "Giao món" : "Thu tiền và giao món")
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="small text-muted align-self-center">Chờ xác nhận tiền QR</span>
+                                    }
+
+                                    <form asp-action="Cancel" method="post"
+                                          onsubmit="return confirm('Hủy đơn @o.OrderCode?');">
+                                        <input type="hidden" name="code" value="@o.OrderCode" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Hủy</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <h3 class="h5 mb-3">Đã xử lý gần đây</h3>
+
+    @if (Model.Done.Count == 0)
+    {
+        <div class="empty-state"><p class="mb-0">Chưa có đơn nào đã xử lý.</p></div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Khách</th>
+                        <th class="text-end">Tổng</th>
+                        <th>Thanh toán</th>
+                        <th>Tình trạng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model.Done)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="Concession" asp-action="Details" asp-route-code="@o.OrderCode" class="order-code">@o.OrderCode</a>
+                                <div class="small text-muted">@o.CreatedAt.ToString("HH:mm dd/MM")</div>
+                            </td>
+                            <td>@o.CustomerName</td>
+                            <td class="text-end">@Money(o.TotalAmount)</td>
+                            <td>
+                                <div class="small mb-1">@o.PaymentMethodText</div>
+                                <span class="status-chip @o.PaymentCss">@o.PaymentStatusText</span>
+                            </td>
+                            <td><span class="status-chip @o.StatusCss">@o.StatusText</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}

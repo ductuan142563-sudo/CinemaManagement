@@ -50,10 +50,13 @@ else
             <article class="order-card">
                 <header class="order-card__head">
                     <div>
-                        <div class="order-card__code">@o.OrderCode</div>
+                        <a asp-action="Details" asp-route-code="@o.OrderCode" class="order-card__code">@o.OrderCode</a>
                         <div class="order-card__time">@o.CreatedAt.ToString("HH:mm dd/MM/yyyy")</div>
                     </div>
-                    <span class="status-chip @o.StatusCss">@o.StatusText</span>
+                    <div class="d-flex flex-column align-items-end gap-1">
+                        <span class="status-chip @o.StatusCss">@o.StatusText</span>
+                        <span class="status-chip @o.PaymentCss">@o.PaymentStatusText</span>
+                    </div>
                 </header>
 
                 <ul class="order-card__items">
@@ -71,10 +74,17 @@ else
                     <p class="order-card__note">Ghi chú: @o.Note</p>
                 }
 
+                <p class="order-card__note mb-0">Thanh toán: @o.PaymentMethodText</p>
+
                 <footer class="order-card__foot">
                     <span>Tổng cộng</span>
                     <strong>@Money(o.TotalAmount)</strong>
                 </footer>
+
+                @if (o.Status != "Cancelled" && o.PaymentStatus != "Paid" && o.PaymentMethod == "QR")
+                {
+                    <a asp-action="Details" asp-route-code="@o.OrderCode" class="btn btn-sm btn-primary">Thanh toán bằng mã QR</a>
+                }
             </article>
         }
     </div>

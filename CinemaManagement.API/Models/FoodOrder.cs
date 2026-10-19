@@ -20,8 +20,19 @@ namespace CinemaManagement.API.Models
 
         public decimal TotalAmount { get; set; }
 
+        // Tình trạng nhận món: Confirmed (chờ nhận) | Completed (đã giao) | Cancelled (đã hủy)
         [Required, MaxLength(20)]
-        public string Status { get; set; } = "Confirmed";   // Confirmed | Completed | Cancelled
+        public string Status { get; set; } = "Confirmed";
+
+        // Phương thức thanh toán: COD (tiền mặt) | QR (chuyển khoản)
+        [Required, MaxLength(10)]
+        public string PaymentMethod { get; set; } = "COD";
+
+        // Tình trạng thanh toán: Pending (chưa) | Paid (đã)
+        [Required, MaxLength(10)]
+        public string PaymentStatus { get; set; } = "Pending";
+
+        public DateTime? PaidAt { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
